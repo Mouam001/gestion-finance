@@ -252,6 +252,8 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+*.sln
+
 
 # CodeRush
 .cr/
@@ -259,4 +261,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-VivaCityWebApi.WebAPI/logs/
+GestionAPI/logs/
+dotnet
