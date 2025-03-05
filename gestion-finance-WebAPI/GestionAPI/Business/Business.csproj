@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Implementations\" />
-      <Folder Include="Interfaces\" />
+      <ProjectReference Include="..\Common\Common.csproj" />
+      <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
     </ItemGroup>
 
 </Project>
