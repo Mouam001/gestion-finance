@@ -1,0 +1,14 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthenticationState>
+    <AuthorizeView>
+        <Authorized>
+            <p>Bonjour, @context.User.Identity.Name!</p>
+            <a href="/logout">Déconnexion</a>
+        </Authorized>
+        <NotAuthorized>
+            <a href="/login">Connexion</a> | <a href="/register">Inscription</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</AuthenticationState>

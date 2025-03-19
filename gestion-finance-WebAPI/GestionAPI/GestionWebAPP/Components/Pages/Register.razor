@@ -1,0 +1,51 @@
+@page "/register"
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
+
+<h3>Inscription</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color: red;">@ErrorMessage</p>
+}
+
+<EditForm Model="RegisterModel" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <div>
+        <label>Nom d'utilisateur</label>
+        <InputText @bind-Value="RegisterModel.Username" required />
+    </div>
+    <div>
+        <label>Mot de passe</label>
+        <InputText type="password" @bind-Value="RegisterModel.Password" required />
+    </div>
+    <button type="submit">S'inscrire</button>
+</EditForm>
+
+@code {
+    private RegisterInputModel RegisterModel { get; set; } = new();
+    private string ErrorMessage { get; set; }
+
+    private async Task HandleRegister()
+    {
+        var user = new IdentityUser { UserName = RegisterModel.Username };
+        var result = await UserManager.CreateAsync(user, RegisterModel.Password);
+        if (result.Succeeded)
+        {
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            ErrorMessage = "Erreur lors de l'inscription.";
+        }
+    }
+
+    public class RegisterInputModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+}
