@@ -1,0 +1,51 @@
+@page "/"
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager Navigation
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<h3>Connexion</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color: red;">@ErrorMessage</p>
+}
+
+<EditForm Model="LoginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <div>
+        <label>Nom d'utilisateur</label>
+        <InputText @bind-Value="LoginModel.Username" required />
+    </div>
+    <div>
+        <label>Mot de passe</label>
+        <InputText type="password" @bind-Value="LoginModel.Password" required />
+    </div>
+    <button type="submit">Se connecter</button>
+</EditForm>
+
+@code {
+    private LoginInputModel LoginModel { get; set; } = new();
+    private string ErrorMessage { get; set; }
+
+    private async Task HandleLogin()
+    {
+        var user = await UserManager.FindByNameAsync(LoginModel.Username);
+        if (user != null)
+        {
+            var result = await SignInManager.PasswordSignInAsync(user, LoginModel.Password, true, false);
+            if (result.Succeeded)
+            {
+                Navigation.NavigateTo("/home");
+                return;
+            }
+        }
+        ErrorMessage = "Nom d'utilisateur ou mot de passe incorrect.";
+    }
+
+    public class LoginInputModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+}
