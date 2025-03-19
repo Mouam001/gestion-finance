@@ -2,6 +2,7 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
+      <Path>../../../../PROJET_WEB_SERVICE</Path>
       <Path>../../gestion-finance-WebAPI</Path>
     </attachedFolders>
     <explicitIncludes />
