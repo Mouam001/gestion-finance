@@ -25,12 +25,13 @@ namespace Business.Implementations
                 throw new Exception("Email already exists");
             }
 
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             var user = new UserDao()
             {
                 Name = request.Name,
                 LastName = request.LastName,
                 Email = request.Email,
-                Password = request.Password,
+                Password = hashedPassword,
                 Address = request.Address,
                 Phone = request.Phone,
                 BalanceInit = 80
@@ -42,7 +43,6 @@ namespace Business.Implementations
                 Name = user.Name,
                 LastName = user.LastName,
                 Email = user.Email,
-                Password = user.Password,
                 Address = user.Address,
                 Phone = user.Phone,
                 BalanceInit = user.BalanceInit
