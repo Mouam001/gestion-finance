@@ -26,20 +26,24 @@ namespace GestionAPI.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize]
+        [ProducesResponseType(typeof(RegisterRequest), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            
             var user = await _userService.RegisterUser(request);
             return Ok(user);
         }
 
         [HttpPost("login")]
-        [Authorize]
+        [ProducesResponseType(typeof(LoginRequest), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-
+           
             var response = await _authService.Login(request);
             return Ok(response);
         }
+    
     }
 }

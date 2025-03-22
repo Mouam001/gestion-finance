@@ -3,49 +3,54 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Business.Interfaces;
-using Common.DAO;
+using Common.DTO;
 using Common.Requests;
 using DataAccess.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Win32.SafeHandles;
 
 namespace Business.Implementations
 {
     public class AuthService : IAuthservice
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
 
-        public AuthService(IUserRepository userRepository, IConfiguration configuration)
+        public AuthService(IUserService userService, IConfiguration configuration)
         {
-            _userRepository = userRepository;
+            _userService = userService;
             _configuration = configuration;
         }
 
         public async Task<AuthenticateResponse> Login(LoginRequest request)
         {
-            var user = await _userRepository.GetUserByEmail(request.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            // Authentifier l'utilisateur
+            var user = await _userService.AuthenticateAsync(request.Email, request.Password);
+            Console.Write(user);
+
+            // Si l'utilisateur est nul ou le mot de passe est incorrect
+            if (user == null )
             {
-                throw new Exception("INvalid email or password");
+                throw new Exception("Invalid email or password");
             }
 
+            // Générer le jeton JWT
             var token = GenerateJwtToken(user);
+
+            // Retourner la réponse avec le jeton et l'utilisateur
             return new AuthenticateResponse
             {
                 Token = token,
-                Name = user.Name,
-                LastName = user.LastName,
-                Email = user.Email
-               
+                User = user
             };
         }
 
-        private string GenerateJwtToken(UserDao user)
+        private string GenerateJwtToken(UserDto user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            // Création des claims (informations de l'utilisateur à inclure dans le JWT)
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Name),
@@ -54,16 +59,14 @@ namespace Business.Implementations
             };
 
             var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"],
-                _configuration["Jwt:Issuer"],
-                claims,
-                expires: DateTime.Now.AddMinutes(30),
+                _configuration["Jwt:Issuer"],  // Issuer
+                _configuration["Jwt:Issuer"],  // Audience
+                claims,                         // Claims
+                expires: DateTime.Now.AddMinutes(30), // Durée de validité
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token); // Générer le jeton
         }
-
     }
 }
-

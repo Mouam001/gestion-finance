@@ -1,51 +1,59 @@
-@page "/"
-@using Microsoft.AspNetCore.Identity
-@inject NavigationManager Navigation
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@page "/login"
 
-<h3>Connexion</h3>
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <p style="color: red;">@ErrorMessage</p>
-}
 
-<EditForm Model="LoginModel" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-    <div>
-        <label>Nom d'utilisateur</label>
-        <InputText @bind-Value="LoginModel.Username" required />
-    </div>
-    <div>
-        <label>Mot de passe</label>
-        <InputText type="password" @bind-Value="LoginModel.Password" required />
-    </div>
-    <button type="submit">Se connecter</button>
-</EditForm>
+<Div Margin="Margin.IsAuto.OnX" Width="Width.Is50">
+    <Heading Size="HeadingSize.Is2" Margin="Margin.Is3.FromBottom" TextAlignment="TextAlignment.Center">
+        Sign in to your account
+    </Heading>
+
+    <Card Shadow="Shadow.Default">
+        <CardBody>
+            <Form>
+                <Field>
+                    <FieldLabel>
+                        Email
+                    </FieldLabel>
+                    <FieldBody>
+                        <TextEdit Placeholder="name@blazorise.com" Role="TextRole.Email" />
+                    </FieldBody>
+                </Field>
+                <Field>
+                    <FieldLabel>
+                        Password
+                    </FieldLabel>
+                    <FieldBody>
+                        <TextEdit Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                    </FieldBody>
+                </Field>
+                <Field Flex="Flex.Wrap.JustifyContent.Between">
+                    <Check TValue="bool">
+                        Remember me
+                    </Check>
+                    <Anchor To="#" TextColor="TextColor.Primary">
+                        Forgot your password?
+                    </Anchor>
+                </Field>
+                <Field>
+                    <Button Color="Color.Primary" Block>
+                        Sign in
+                    </Button>
+                </Field>
+                <Field>
+                    Don’t have an account yet? <Anchor To="/register" TextColor="TextColor.Primary">Sign up</Anchor>
+                </Field>
+            </Form>
+        </CardBody>
+    </Card>
+</Div>
 
 @code {
-    private LoginInputModel LoginModel { get; set; } = new();
-    private string ErrorMessage { get; set; }
+    private string Email { get; set; } = "";
+    private string Password { get; set; } = "";
+    private bool RememberMe { get; set; } = false;
 
-    private async Task HandleLogin()
+    private void OnSubmit()
     {
-        var user = await UserManager.FindByNameAsync(LoginModel.Username);
-        if (user != null)
-        {
-            var result = await SignInManager.PasswordSignInAsync(user, LoginModel.Password, true, false);
-            if (result.Succeeded)
-            {
-                Navigation.NavigateTo("/home");
-                return;
-            }
-        }
-        ErrorMessage = "Nom d'utilisateur ou mot de passe incorrect.";
-    }
-
-    public class LoginInputModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        Console.WriteLine($"Email: {Email}, Password: {Password}, Remember Me: {RememberMe}");
     }
 }

@@ -1,15 +1,42 @@
-﻿@page "/home"
+﻿@page "/"
 @attribute [Authorize]
 @using GestionWebAPP.Components.Pages.HomeComponents
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+@if (isUserAuthenticated)
+{
+    <!-- Afficher les éléments de la page d'accueil si l'utilisateur est authentifié -->
+    <BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
+    <BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
+    <BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
 
-<BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
-<BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
-<BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
+    <BudgetChart />
+    <TransactionsChart />
+    <DashboardChart />
+    <TransactionList />
+}
+else
+{
+    <!-- Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié -->
+    <RedirectToLogin />
+}
 
-<BudgetChart />
-<TransactionsChart />
-<DashboardChart />
-<TransactionList />
+@code {
+    private bool isUserAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        isUserAuthenticated = user.Identity.IsAuthenticated;
+
+        if (!isUserAuthenticated)
+        {
+            Navigation.NavigateTo("/login");  // Redirige vers la page de connexion
+        }
+    }
+}
