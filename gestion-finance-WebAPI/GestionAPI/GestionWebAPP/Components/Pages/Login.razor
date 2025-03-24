@@ -13,7 +13,7 @@
     <Card Shadow="Shadow.Default">
         <CardBody>
             <!-- Utilisation d'EditForm pour la validation -->
-            <EditForm Model="_loginModel" OnValidSubmit="OnSubmit">
+            <EditForm Model="_loginModel" OnValidSubmit="OnSubmit" >
                 
                 <!-- Validation des annotations de données -->
                 <DataAnnotationsValidator />
@@ -24,7 +24,7 @@
                         Email
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit @bind-Value="_loginModel.Email" Placeholder="name@blazorise.com" Role="TextRole.Email" />
+                        <TextEdit @bind-Value="_loginModel.Email" Placeholder="name@blazorise.com" Role="@TextRole.Email" />
                     </FieldBody>
                 </Field>
 
@@ -33,7 +33,7 @@
                         Password
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit @bind-Value="_loginModel.Password" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                        <TextEdit @bind-Value="_loginModel.Password" Placeholder="********" Role="@TextRole.Password" autocomplete="new-password" />
                     </FieldBody>
                 </Field>
 
@@ -48,7 +48,7 @@
 
                 <Field>
                     <!-- Bouton de type Submit avec validation -->
-                    <Button Color="Color.Primary" ButtonType="ButtonType.Submit" Block>
+                    <Button Color="Color.Primary" ButtonType="Submit" Clicked="OnSubmit" Block>
                         Sign in
                     </Button>
                 </Field>
@@ -67,7 +67,7 @@
     [Inject] private AuthService AuthService { get; set; }
     [Inject] private NavigationManager Navigation { get; set; }
 
-    private async Task OnSubmit()
+    public async Task OnSubmit()
     {
         Console.WriteLine("Attempting login for: " + _loginModel.Email);
 
@@ -86,6 +86,7 @@
         else
         {
             Console.WriteLine("Login failed");
+            Navigation.NavigateTo("/home");
         }
     }
 
