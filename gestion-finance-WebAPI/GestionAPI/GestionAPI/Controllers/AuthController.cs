@@ -30,7 +30,7 @@ namespace GestionAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            
+
             var user = await _userService.RegisterUser(request);
             return Ok(user);
         }
@@ -40,7 +40,7 @@ namespace GestionAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-           
+
             var response = await _authService.Login(request);
             return Ok(response);
         }
@@ -63,6 +63,33 @@ namespace GestionAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-    
+
+        [HttpPut("update/{userId}")]
+        public async Task<IActionResult> UpdateUser(int userId, [FromBody] UpdateUserRequest request)
+        {
+            try
+            {
+                var updateUser = await _userService.UpdateUser(userId, request);
+                return Ok(new { message = "User updated", updateUser });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        
+        [HttpGet("allUsers")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var users = await _userService.GetAllUsers();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
