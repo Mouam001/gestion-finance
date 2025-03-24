@@ -75,6 +75,19 @@ namespace Business.Implementations
             };
         }
 
+        // AJout Methode supression 
+        public async Task<bool> DeleteUSer(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
 
     }

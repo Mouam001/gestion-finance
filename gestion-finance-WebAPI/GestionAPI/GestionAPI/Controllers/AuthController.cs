@@ -44,6 +44,25 @@ namespace GestionAPI.Controllers
             var response = await _authService.Login(request);
             return Ok(response);
         }
+
+        [HttpDelete("delete/{userId}")]
+        public async Task<IActionResult> DeleteUser(int userId)
+        {
+            try
+            {
+                bool deleted = await _userService.DeleteUSer(userId);
+                if (deleted)
+                {
+                    return Ok(new { message = "User deleted" });
+                }
+
+                return BadRequest(new { message = "User not found" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     
     }
 }

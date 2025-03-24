@@ -9,5 +9,6 @@ namespace Business.Interfaces
     {
        Task<UserDto> RegisterUser (RegisterRequest request);
        Task<UserDto> AuthenticateAsync(string email, string password); // Authentification
+       Task<bool> DeleteUSer (int userId);
     }
 }
