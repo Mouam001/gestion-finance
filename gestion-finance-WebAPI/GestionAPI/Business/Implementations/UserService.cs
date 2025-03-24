@@ -35,6 +35,7 @@ namespace Business.Implementations
             var user = new UserDao()
             {
                 Name = request.Name,
+                LastName = request.LastName,
                 Email = request.Email,
                 Password = hashedPassword, // Stocker le mot de passe haché
                 Address = request.Address,
