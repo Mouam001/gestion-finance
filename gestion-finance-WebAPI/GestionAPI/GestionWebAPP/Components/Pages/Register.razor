@@ -1,51 +1,91 @@
 @page "/register"
-@using Microsoft.AspNetCore.Identity
-@inject UserManager<IdentityUser> UserManager
-@inject SignInManager<IdentityUser> SignInManager
-@inject NavigationManager Navigation
+@using GestionWebAPP.Services
+@using Common.Requests
 
-<h3>Inscription</h3>
+<Div Margin="Margin.IsAuto.OnX" Width="Width.Is50">
+    <Heading Size="HeadingSize.Is2" Margin="Margin.Is3.FromBottom" TextAlignment="TextAlignment.Center">
+        Create an account
+    </Heading>
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <p style="color: red;">@ErrorMessage</p>
-}
-
-<EditForm Model="RegisterModel" OnValidSubmit="HandleRegister">
-    <DataAnnotationsValidator />
-    <div>
-        <label>Nom d'utilisateur</label>
-        <InputText @bind-Value="RegisterModel.Username" required />
-    </div>
-    <div>
-        <label>Mot de passe</label>
-        <InputText type="password" @bind-Value="RegisterModel.Password" required />
-    </div>
-    <button type="submit">S'inscrire</button>
-</EditForm>
+    <Card Shadow="Shadow.Default">
+        <CardBody>
+            <Form OnValidSubmit="OnSubmit">
+                <Field>
+                    <FieldLabel>
+                        Your Email
+                    </FieldLabel>
+                    <FieldBody>
+                        <TextEdit @bind-Value="Email" Placeholder="name@blazorise.com" Role="TextRole.Email" />
+                    </FieldBody>
+                </Field>
+                <Field>
+                    <FieldLabel>
+                        Password
+                    </FieldLabel>
+                    <FieldBody>
+                        <TextEdit @bind-Value="Password" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                    </FieldBody>
+                </Field>
+                <Field>
+                    <FieldLabel>
+                        Confirm Password
+                    </FieldLabel>
+                    <FieldBody>
+                        <TextEdit @bind-Value="ConfirmPassword" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                    </FieldBody>
+                </Field>
+                <Field Flex="Flex.JustifyContent.Between">
+                    <Check @bind-Value="TermsAccepted" TValue="bool">
+                        I accept the <Anchor To="#" TextColor="TextColor.Primary">Terms and Conditions</Anchor>
+                    </Check>
+                </Field>
+                <Field>
+                    <Button Color="Color.Primary" Block>
+                        Create an account
+                    </Button>
+                </Field>
+                <Field>
+                    Already have an account? <Anchor To="/login" TextColor="TextColor.Primary">Login here</Anchor>
+                </Field>
+            </Form>
+        </CardBody>
+    </Card>
+</Div>
 
 @code {
-    private RegisterInputModel RegisterModel { get; set; } = new();
-    private string ErrorMessage { get; set; }
+    private string Email { get; set; } = "";
+    private string Password { get; set; } = "";
+    private string ConfirmPassword { get; set; } = "";
+    private bool TermsAccepted { get; set; } = false;
 
-    private async Task HandleRegister()
+    [Inject] private AuthService AuthService { get; set; }
+    [Inject] private NavigationManager Navigation { get; set; }
+
+    private async Task OnSubmit()
     {
-        var user = new IdentityUser { UserName = RegisterModel.Username };
-        var result = await UserManager.CreateAsync(user, RegisterModel.Password);
-        if (result.Succeeded)
+        if (Password != ConfirmPassword)
         {
-            await SignInManager.SignInAsync(user, isPersistent: false);
-            Navigation.NavigateTo("/");
+            Console.WriteLine("Passwords do not match");
+            return;
+        }
+
+        var registerRequest = new RegisterRequest
+        {
+            Email = Email,
+            Password = Password
+        };
+
+        var isSuccess = await AuthService.Register(registerRequest);
+
+        if (isSuccess)
+        {
+            // Redirige vers la page de connexion ou l'accueil après une inscription réussie
+            Navigation.NavigateTo("/login");
         }
         else
         {
-            ErrorMessage = "Erreur lors de l'inscription.";
+            // Gérer l'échec de l'inscription (afficher un message d'erreur par exemple)
+            Console.WriteLine("Registration failed");
         }
-    }
-
-    public class RegisterInputModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
     }
 }

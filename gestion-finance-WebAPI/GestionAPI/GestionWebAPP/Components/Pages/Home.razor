@@ -1,15 +1,63 @@
 ﻿@page "/home"
-@attribute [Authorize]
-@using GestionWebAPP.Components.Pages.HomeComponents
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime  
 
-<PageTitle>Home</PageTitle>
+@if (isUserAuthenticated)
+{
+    <!-- Afficher les éléments de la page d'accueil si l'utilisateur est authentifié -->
+    <BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
+    <BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
+    <BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
 
-<BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
-<BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
-<BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
+    <BudgetChart />
+    <TransactionsChart />
+    <DashboardChart />
+    <TransactionList />
+}
+else
+{
+    <!-- Afficher un message ou rediriger -->
+    <p>Redirection vers la page de connexion...</p>
+}
 
-<BudgetChart />
-<TransactionsChart />
-<DashboardChart />
-<TransactionList />
+@code {
+    private bool isUserAuthenticated;
+
+    // Appelé après le premier rendu de la page
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Ajout d'un log dans la console pour déboguer
+            await JSRuntime.InvokeVoidAsync("console.log", "OnAfterRenderAsync appelé, vérification de l'état de l'authentification...");
+
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authenticationState.User;
+
+            // Affichage de l'état d'authentification dans la console pour vérifier
+            await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
+
+            isUserAuthenticated = user.Identity.IsAuthenticated;
+
+            // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+            if (!isUserAuthenticated)
+            {
+                // Ajout du message dans la console pour voir si la redirection est bien appelée
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
+                // Rediriger vers la page de connexion
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                // Si l'utilisateur est authentifié, afficher un message dans la console
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+            }
+
+            // Forcer un re-rendu
+            StateHasChanged();
+        }
+    }
+}
