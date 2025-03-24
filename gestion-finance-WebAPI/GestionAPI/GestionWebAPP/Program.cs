@@ -1,27 +1,66 @@
+using Blazored.LocalStorage;
 using GestionWebAPP.Components;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using DbContext = DataAccess.DbContext;
+using Blazorise;
+using Blazorise.Bootstrap5;
+using Blazorise.Icons.FontAwesome;
+using GestionWebAPP.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configuration de la base de données avec SQLite
+builder.Services.AddDbContext<DbContext>(options =>
+    SqliteDbContextOptionsBuilderExtensions.UseSqlite(options));  // Utilise ta chaîne de connexion
+
+// Configuration d'Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<DbContext>()
+    .AddDefaultTokenProviders();
+
+// Ajout des services Blazorise
+builder.Services.AddBlazorise(options =>
+    {
+        options.Immediate = true;
+    })
+    .AddBootstrap5Providers()
+    .AddFontAwesomeIcons();
+
+// Ajout des composants Razor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var app = builder.Build();
+// Ajout du HttpClient pour la communication avec l'API
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5120/") });
 
-// Configure the HTTP request pipeline.
+// Enregistrement de CustomAuthenticationStateProvider
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+
+// Ajout des services d'authentification
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
+// Enregistrement des services AuthService
+builder.Services.AddScoped<AuthService>();
+
+// Enregistrement de Blazored.LocalStorage
+builder.Services.AddBlazoredLocalStorage();
+
+var app = builder.Build(); // Doit être appelé avant toute configuration de pipeline
+
+// Configuration du pipeline de requêtes HTTP
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.Run();
+await app.RunAsync(); // RunAsync doit être exécuté après la configuration des middlewares
