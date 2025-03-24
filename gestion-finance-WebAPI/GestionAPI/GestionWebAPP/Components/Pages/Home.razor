@@ -1,10 +1,9 @@
-﻿@page "/"
-@attribute [Authorize]
-@using GestionWebAPP.Components.Pages.HomeComponents
+﻿@page "/home"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime  
 
 @if (isUserAuthenticated)
 {
@@ -20,23 +19,45 @@
 }
 else
 {
-    <!-- Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié -->
-    <RedirectToLogin />
+    <!-- Afficher un message ou rediriger -->
+    <p>Redirection vers la page de connexion...</p>
 }
 
 @code {
     private bool isUserAuthenticated;
 
-    protected override async Task OnInitializedAsync()
+    // Appelé après le premier rendu de la page
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authenticationState.User;
-
-        isUserAuthenticated = user.Identity.IsAuthenticated;
-
-        if (!isUserAuthenticated)
+        if (firstRender)
         {
-            Navigation.NavigateTo("/login");  // Redirige vers la page de connexion
+            // Ajout d'un log dans la console pour déboguer
+            await JSRuntime.InvokeVoidAsync("console.log", "OnAfterRenderAsync appelé, vérification de l'état de l'authentification...");
+
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authenticationState.User;
+
+            // Affichage de l'état d'authentification dans la console pour vérifier
+            await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
+
+            isUserAuthenticated = user.Identity.IsAuthenticated;
+
+            // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+            if (!isUserAuthenticated)
+            {
+                // Ajout du message dans la console pour voir si la redirection est bien appelée
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
+                // Rediriger vers la page de connexion
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                // Si l'utilisateur est authentifié, afficher un message dans la console
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+            }
+
+            // Forcer un re-rendu
+            StateHasChanged();
         }
     }
 }

@@ -1,5 +1,6 @@
 @page "/register"
-
+@using GestionWebAPP.Services
+@using Common.Requests
 
 <Div Margin="Margin.IsAuto.OnX" Width="Width.Is50">
     <Heading Size="HeadingSize.Is2" Margin="Margin.Is3.FromBottom" TextAlignment="TextAlignment.Center">
@@ -8,13 +9,13 @@
 
     <Card Shadow="Shadow.Default">
         <CardBody>
-            <Form>
+            <Form OnValidSubmit="OnSubmit">
                 <Field>
                     <FieldLabel>
                         Your Email
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit Placeholder="name@blazorise.com" Role="TextRole.Email" />
+                        <TextEdit @bind-Value="Email" Placeholder="name@blazorise.com" Role="TextRole.Email" />
                     </FieldBody>
                 </Field>
                 <Field>
@@ -22,7 +23,7 @@
                         Password
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                        <TextEdit @bind-Value="Password" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
                     </FieldBody>
                 </Field>
                 <Field>
@@ -30,11 +31,11 @@
                         Confirm Password
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                        <TextEdit @bind-Value="ConfirmPassword" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
                     </FieldBody>
                 </Field>
                 <Field Flex="Flex.JustifyContent.Between">
-                    <Check TValue="bool">
+                    <Check @bind-Value="TermsAccepted" TValue="bool">
                         I accept the <Anchor To="#" TextColor="TextColor.Primary">Terms and Conditions</Anchor>
                     </Check>
                 </Field>
@@ -50,3 +51,41 @@
         </CardBody>
     </Card>
 </Div>
+
+@code {
+    private string Email { get; set; } = "";
+    private string Password { get; set; } = "";
+    private string ConfirmPassword { get; set; } = "";
+    private bool TermsAccepted { get; set; } = false;
+
+    [Inject] private AuthService AuthService { get; set; }
+    [Inject] private NavigationManager Navigation { get; set; }
+
+    private async Task OnSubmit()
+    {
+        if (Password != ConfirmPassword)
+        {
+            Console.WriteLine("Passwords do not match");
+            return;
+        }
+
+        var registerRequest = new RegisterRequest
+        {
+            Email = Email,
+            Password = Password
+        };
+
+        var isSuccess = await AuthService.Register(registerRequest);
+
+        if (isSuccess)
+        {
+            // Redirige vers la page de connexion ou l'accueil après une inscription réussie
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            // Gérer l'échec de l'inscription (afficher un message d'erreur par exemple)
+            Console.WriteLine("Registration failed");
+        }
+    }
+}

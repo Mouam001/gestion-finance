@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using GestionWebAPP.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,8 @@ using DbContext = DataAccess.DbContext;
 using Blazorise;
 using Blazorise.Bootstrap5;
 using Blazorise.Icons.FontAwesome;
+using GestionWebAPP.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,24 +32,35 @@ builder.Services.AddBlazorise(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Ajout du HttpClient pour la communication avec l'API
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5120/") });
 
+// Enregistrement de CustomAuthenticationStateProvider
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 
-var app = builder.Build();
+// Ajout des services d'authentification
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
+// Enregistrement des services AuthService
+builder.Services.AddScoped<AuthService>();
+
+// Enregistrement de Blazored.LocalStorage
+builder.Services.AddBlazoredLocalStorage();
+
+var app = builder.Build(); // Doit être appelé avant toute configuration de pipeline
 
 // Configuration du pipeline de requêtes HTTP
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.Run();
+await app.RunAsync(); // RunAsync doit être exécuté après la configuration des middlewares

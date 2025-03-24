@@ -1,6 +1,9 @@
-@page "/login"
-
-
+@page "/"
+@using GestionWebAPP.Services
+@using Common.Requests
+@using Blazorise
+@using System.ComponentModel.DataAnnotations
+@using Blazorise.Extensions
 
 <Div Margin="Margin.IsAuto.OnX" Width="Width.Is50">
     <Heading Size="HeadingSize.Is2" Margin="Margin.Is3.FromBottom" TextAlignment="TextAlignment.Center">
@@ -9,51 +12,92 @@
 
     <Card Shadow="Shadow.Default">
         <CardBody>
-            <Form>
+            <!-- Utilisation d'EditForm pour la validation -->
+            <EditForm Model="_loginModel" OnValidSubmit="OnSubmit">
+                
+                <!-- Validation des annotations de données -->
+                <DataAnnotationsValidator />
+                <Blazorise.ValidationSummary />
+
                 <Field>
                     <FieldLabel>
                         Email
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit Placeholder="name@blazorise.com" Role="TextRole.Email" />
+                        <TextEdit @bind-Value="_loginModel.Email" Placeholder="name@blazorise.com" Role="TextRole.Email" />
                     </FieldBody>
                 </Field>
+
                 <Field>
                     <FieldLabel>
                         Password
                     </FieldLabel>
                     <FieldBody>
-                        <TextEdit Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
+                        <TextEdit @bind-Value="_loginModel.Password" Placeholder="********" Role="TextRole.Password" autocomplete="new-password" />
                     </FieldBody>
                 </Field>
+
                 <Field Flex="Flex.Wrap.JustifyContent.Between">
-                    <Check TValue="bool">
+                    <Check @bind-Value="_loginModel.RememberMe" TValue="bool">
                         Remember me
                     </Check>
                     <Anchor To="#" TextColor="TextColor.Primary">
                         Forgot your password?
                     </Anchor>
                 </Field>
+
                 <Field>
-                    <Button Color="Color.Primary" Block>
+                    <!-- Bouton de type Submit avec validation -->
+                    <Button Color="Color.Primary" ButtonType="ButtonType.Submit" Block>
                         Sign in
                     </Button>
                 </Field>
+
                 <Field>
                     Don’t have an account yet? <Anchor To="/register" TextColor="TextColor.Primary">Sign up</Anchor>
                 </Field>
-            </Form>
+            </EditForm>
         </CardBody>
     </Card>
 </Div>
 
 @code {
-    private string Email { get; set; } = "";
-    private string Password { get; set; } = "";
-    private bool RememberMe { get; set; } = false;
+    private readonly LoginModel _loginModel = new LoginModel();
 
-    private void OnSubmit()
+    [Inject] private AuthService AuthService { get; set; }
+    [Inject] private NavigationManager Navigation { get; set; }
+
+    private async Task OnSubmit()
     {
-        Console.WriteLine($"Email: {Email}, Password: {Password}, Remember Me: {RememberMe}");
+        Console.WriteLine("Attempting login for: " + _loginModel.Email);
+
+        var loginRequest = new LoginRequest
+        {
+            Email = _loginModel.Email,
+            Password = _loginModel.Password
+        };
+
+        var isSuccess = await AuthService.Login(loginRequest);
+
+        if (isSuccess)
+        {
+            Navigation.NavigateTo("/home");
+        }
+        else
+        {
+            Console.WriteLine("Login failed");
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; } = "";
+
+        public bool RememberMe { get; set; } = false;
     }
 }
