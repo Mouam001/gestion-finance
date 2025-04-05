@@ -59,7 +59,7 @@ namespace Business.Implementations
         
         public async Task<List<Bank>> GetBanksAsync()
         {
-            var response = await _httpClient.GetAsync("https://apisandbox.openbankproject.com/obp/v4.0.0/banks");
+            var response = await _httpClient.GetAsync("https://apisandbox.openbankproject.com/obp/v5.1.0/banks");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -73,14 +73,14 @@ namespace Business.Implementations
             return banksResponse.Banks;
         }
         
-        public async Task<string> GetUserAccountsAsync()
+        public async Task<string> GetUserAccountsAsync(string bankId)
         {
             string token = await GetAccessTokenAsync();
 
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"DirectLogin token={token}");
 
-            var response = await _httpClient.GetAsync($"{ApiUrl}/obp/v5.1.0/banks/rbs/accounts");
+            var response = await _httpClient.GetAsync($"{ApiUrl}/obp/v5.1.0/banks/{bankId}/accounts");
             string responseJson = await response.Content.ReadAsStringAsync();
 
             Console.WriteLine($"Réponse API Get User Accounts JSON: {responseJson}");
@@ -93,9 +93,9 @@ namespace Business.Implementations
             return responseJson;
         }
         
-        public async Task<List<BankAccountDetails>> GetUserBanksAsync()
+        public async Task<List<BankAccountDetails>> GetUserBanksAsync(string bankId)
         {
-            string accountsJson = await GetUserAccountsAsync();
+            string accountsJson = await GetUserAccountsAsync(bankId);
 
             // Vérifier si la réponse est un tableau (array) ou un objet (lorsque vous travaillez avec une liste)
             JArray accountsArray = JArray.Parse(accountsJson);  // Utiliser JArray pour gérer les tableaux JSON

@@ -46,11 +46,11 @@ namespace GestionAPI.Controllers
         [HttpGet("user")]
         [ProducesResponseType(200)] // Code 200 si OK
         [ProducesResponseType(500)] // Code 500 si erreur
-        public async Task<IActionResult> GetUserBanks()
+        public async Task<IActionResult> GetUserBanks(string bankId)
         {
             try
             {
-                var userBanks = await _obpService.GetUserBanksAsync();
+                var userBanks = await _obpService.GetUserBanksAsync(bankId);
                 return Ok(new { banks = userBanks });
             }
             catch (Exception ex)
@@ -109,7 +109,7 @@ namespace GestionAPI.Controllers
             }
         }
         
-        [HttpGet("banks")]
+        [HttpGet("mybanks")]
         public async Task<IActionResult> GetBanks()
         {
             try
