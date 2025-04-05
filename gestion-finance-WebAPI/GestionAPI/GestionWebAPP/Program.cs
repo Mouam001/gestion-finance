@@ -9,6 +9,7 @@ using Blazorise.Icons.FontAwesome;
 using GestionWebAPP.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration de la base de données avec SQLite
@@ -36,16 +37,22 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5120/") });
 
 // Enregistrement de CustomAuthenticationStateProvider
+
+
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 
-// Ajout des services d'authentification
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
 
 // Enregistrement des services AuthService
 builder.Services.AddScoped<AuthService>();
 
 // Enregistrement de Blazored.LocalStorage
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddAuthorizationCore();
+
 
 var app = builder.Build(); // Doit être appelé avant toute configuration de pipeline
 
