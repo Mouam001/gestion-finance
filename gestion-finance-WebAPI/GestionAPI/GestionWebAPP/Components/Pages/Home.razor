@@ -1,23 +1,39 @@
 ﻿@page "/"
+@layout MainLayout
+
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using GestionWebAPP.Components.Pages.HomeComponents
+@using GestionWebAPP.Components.Layout
+@using static GestionWebAPP.Components.Pages.HomeComponents.TransactionList
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime  
 
 @if (isUserAuthenticated)
 {
-    <!-- Afficher les éléments de la page d'accueil si l'utilisateur est authentifié -->
-    <BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
-    <BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
-    <BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
+    <div class="dashboard-container p-4">
+        <h2 class="mb-4">Tableau de bord</h2>
 
-    <BudgetChart />
-    <TransactionsChart />
-    <DashboardChart />
-    <TransactionList />
-    
+        <div class="row mb-4">
+            <div class="col-md-4"><BalanceCard Title="💰 Solde" Amount="3 420,00 €" /></div>
+            <div class="col-md-4"><IncomeCard Title="📥 Revenus" Amount="2 700,00 €" /></div>
+            <div class="col-md-4"><ExpenseCard Title="📤 Dépenses" Amount="3 200,00 €" /></div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6"><ExpensesChart Title="📊 Répartition des dépenses" /></div>
+            <div class="col-md-6">
+                <TransactionList Transactions="Transactions"/>
+            </div>
+        </div>
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6"><SavingGoal Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30" /></div>
+            <div class="col-md-6"><DashboardActions /></div>
+        </div>
+    </div>
+
 }
 else
 {
@@ -62,4 +78,14 @@ else
             StateHasChanged();
         }
     }
+}
+
+@code{
+    public List<Transaction> Transactions=new List<Transaction>()
+    {
+        new Transaction { Date = DateTime.Parse("2025-04-13"), Description = "Restaurant", Amount = -50.00m, Type = TransactionList.TransactionType.Expense },
+        new Transaction { Date = DateTime.Parse("2025-04-12"), Description = "Shopping", Amount = -100.00m, Type = TransactionList.TransactionType.Expense },
+        new Transaction { Date = DateTime.Parse("2025-04-10"), Description = "Salaire", Amount = 2000.00m, Type = TransactionList.TransactionType.Income }
+    };
+
 }

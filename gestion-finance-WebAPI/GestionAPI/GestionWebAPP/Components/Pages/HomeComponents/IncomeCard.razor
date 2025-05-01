@@ -1,14 +1,12 @@
-@using System.ComponentModel.DataAnnotations
-
 @code {
     [Parameter]
-    public string Title { get; set; } = "💰 Solde";
+    public string Title { get; set; } = "📥 Revenus";
 
     [Parameter]
     public string Amount { get; set; } = "0,00 €";
 }
 
-<div class="card stat-card balance">
+<div class="card stat-card income">
     <div class="card-body">
         <h5>@Title</h5>
         <p class="amount">@Amount</p>

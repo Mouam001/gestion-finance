@@ -1,0 +1,33 @@
+<div class="card p-4 chart-card" style=" width: 100% !important;
+                                            max-width: 400px;
+                                            height: auto !important;
+                                            margin: 0 auto;
+                                            display: block;">
+    <h5 class="mb-3">@Title</h5>
+    <Chart Config="_config1" @ref="_chart1"></Chart>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Répartition des dépenses";
+
+    private PieChartConfig _config1;
+    private Chart _chart1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _config1 = new PieChartConfig()
+        {
+        };
+
+        // Replace with actual data and colors
+        _config1.Data.Labels = new List<string> { "Nourriture", "Transport", "Santé" };
+        _config1.Data.Datasets.Add(new PieDataset()
+        {
+            Label = "My First Dataset",
+            Data = new List<Decimal?> { 30, 50, 20 }, // Example data
+            BackgroundColor = new List<string> { "#FF6384", "#36A2EB", "#FFCE56" }, // Example colors
+            HoverOffset = 4
+        });
+    }
+}

@@ -1,13 +1,24 @@
-﻿@inherits LayoutComponentBase
+﻿@using GestionWebAPP.Services
+@using Blazored.LocalStorage
+@inherits LayoutComponentBase
+@inject ILocalStorageService LocalStorage
+@inject AuthService AuthService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu/>
+        <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @if (isAuthenticated)
+            {
+                <Button @onclick="Logout">Se déconnecter</Button>
+            }
         </div>
 
         <article class="content px-4">
@@ -19,5 +30,58 @@
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a class="dismiss"></a>
 </div>
+
+@code {
+    private bool isAuthenticated;
+    private bool alreadyRendered;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!alreadyRendered)
+        {
+            alreadyRendered = true;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            isAuthenticated = user.Identity?.IsAuthenticated == true;
+
+            // Ne tente JS interop que si on est bien en contexte interactif
+            if (JSRuntime is not null)
+            {
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("console.log", "L'utilisateur est connecté ? " + isAuthenticated);
+                }
+                catch
+                {
+                   
+                }
+            }
+
+            StateHasChanged(); // Pour forcer le re-render avec isAuthenticated à true
+        }
+    }
+
+    private async Task Logout()
+    {
+        try
+        {
+            await AuthService.Logout();                            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erreur côté serveur pendant le logout : " + ex.Message);
+        }
+
+        await LocalStorage.RemoveItemAsync("authToken");
+        if (AuthenticationStateProvider is CustomAuthenticationStateProvider customProvider)
+        {
+            customProvider.MarkUserAsLoggedOut();
+        }
+
+        Navigation.NavigateTo("/login", true);
+    }
+}

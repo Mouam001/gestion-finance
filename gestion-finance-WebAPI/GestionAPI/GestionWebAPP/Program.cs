@@ -6,8 +6,10 @@ using DbContext = DataAccess.DbContext;
 using Blazorise;
 using Blazorise.Bootstrap5;
 using Blazorise.Icons.FontAwesome;
+using Business.Interfaces;
 using GestionWebAPP.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,11 +45,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-
+builder.Services.AddScoped<AuthService>();
 
 
 // Enregistrement des services AuthService
-builder.Services.AddScoped<AuthService>();
+
 
 // Enregistrement de Blazored.LocalStorage
 builder.Services.AddBlazoredLocalStorage();
