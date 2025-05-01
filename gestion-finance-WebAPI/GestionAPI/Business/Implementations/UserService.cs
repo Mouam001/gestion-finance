@@ -35,6 +35,7 @@ namespace Business.Implementations
             var user = new UserDao()
             {
                 Name = request.Name,
+                LastName = request.LastName,
                 Email = request.Email,
                 Password = hashedPassword, // Stocker le mot de passe haché
                 Address = request.Address,
@@ -75,7 +76,65 @@ namespace Business.Implementations
             };
         }
 
+        // AJout Methode supression 
+        public async Task<bool> DeleteUSer(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
 
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        
+        // Ajout Methode Mise à jour User
+        public async Task<UserDto> UpdateUser(int userId, UpdateUserRequest request)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
 
+            user.Name = request.Name ?? user.Name;
+            user.LastName = request.LastName ?? user.LastName;
+            user.Email = request.Email ?? user.Email;
+            user.Address = request.Address ?? user.Address;
+            user.Phone = request.Phone ?? user.Phone;
+            
+            // Si le mot de passe est fourni, le mettre à jour
+            if (!string.IsNullOrEmpty(request.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            }
+            await _context.SaveChangesAsync();
+
+            return new UserDto
+            {
+                Name = user.Name,
+                LastName = user.LastName,
+                Email = user.Email,
+                Address = user.Address,
+                Phone = user.Phone
+            };
+        }
+
+        public async Task<List<UserDto>> GetAllUsers()
+        {
+            var users = await _context.Users.ToListAsync();
+            return users.Select(user => new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                LastName = user.LastName,
+                Email = user.Email,
+                Address = user.Address,
+                Phone = user.Phone,
+                BalanceInit = user.BalanceInit
+            }).ToList();
+        }
     }
 }

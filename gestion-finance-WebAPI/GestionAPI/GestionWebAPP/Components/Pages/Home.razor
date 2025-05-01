@@ -1,6 +1,7 @@
-﻿@page "/home"
+﻿@page "/"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using GestionWebAPP.Components.Pages.HomeComponents
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime  
@@ -16,6 +17,7 @@
     <TransactionsChart />
     <DashboardChart />
     <TransactionList />
+    
 }
 else
 {

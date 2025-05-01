@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -68,14 +71,23 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+    
+    //VAR OPTIONNEL 
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 // 🔹 Configuration de l’injection de dépendances (DI)
 builder.Services.AddScoped<IUserService, UserService>(); // Service métier
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // Accès aux données
 builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
+builder.Services.AddScoped<IObpService,ObpService>();
 
+// Ajouter HttpClient et le service OBP
+builder.Services.AddHttpClient();
 
+//builder.Services.AddControllers();
 var app = builder.Build();
 
 // 🔹 Activer Swagger en mode développement
@@ -85,6 +97,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseHttpsRedirection(); // Ajout de redirection vers HTTPS
 app.UseAuthorization();
@@ -93,47 +106,3 @@ app.MapControllers(); // 👈 Permet d'utiliser les contrôleurs
 app.Run();
 
 
-// var builder = WebApplication.CreateBuilder(args);
-
-// // Add services to the container.
-// // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
-
-// var app = builder.Build();
-
-// // Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
-
-// app.UseHttpsRedirection();
-
-// var summaries = new[]
-// {
-//     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-// };
-
-// app.MapGet("/weatherforecast", () =>
-//     {
-//         var forecast = Enumerable.Range(1, 5).Select(index =>
-//                 new WeatherForecast
-//                 (
-//                     DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-//                     Random.Shared.Next(-20, 55),
-//                     summaries[Random.Shared.Next(summaries.Length)]
-//                 ))
-//             .ToArray();
-//         return forecast;
-//     })
-//     .WithName("GetWeatherForecast")
-//     .WithOpenApi();
-
-// app.Run();
-
-// record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-// {
-//     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-// }
