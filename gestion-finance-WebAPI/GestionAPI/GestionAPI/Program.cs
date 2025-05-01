@@ -71,21 +71,23 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+    
+    //VAR OPTIONNEL 
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 // 🔹 Configuration de l’injection de dépendances (DI)
 builder.Services.AddScoped<IUserService, UserService>(); // Service métier
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // Accès aux données
 builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
+builder.Services.AddScoped<IObpService,ObpService>();
 
 // Ajouter HttpClient et le service OBP
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<ObpService>();
 
-builder.Services.AddControllers();
-
-
-
+//builder.Services.AddControllers();
 var app = builder.Build();
 
 // 🔹 Activer Swagger en mode développement
@@ -95,6 +97,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseHttpsRedirection(); // Ajout de redirection vers HTTPS
 app.UseAuthorization();
