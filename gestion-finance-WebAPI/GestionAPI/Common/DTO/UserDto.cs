@@ -7,7 +7,7 @@ public class UserDto
     public string LastName { get; set; }
     public string Email { get; set; }
     public string Password { get; set; } = null!;
-    public int Phone { get; set; }
+    public float Phone { get; set; }
     public string Address { get; set; }
     public float BalanceInit { get; set; } = 80;
 }

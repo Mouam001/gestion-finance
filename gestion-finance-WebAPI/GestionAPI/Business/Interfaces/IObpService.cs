@@ -2,7 +2,7 @@ using Common.DTO;
 
 namespace Business.Interfaces
 {
-    public class IObpService
+    public interface IObpService
     {
         Task<List<BankDto>> GetBanksAsync();
         Task<List<BankAccountDetailsDto>> GetUserBanksAsync();
