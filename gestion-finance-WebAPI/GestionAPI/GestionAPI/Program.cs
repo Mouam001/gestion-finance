@@ -54,7 +54,7 @@ builder.Services.AddSwaggerGen(c =>
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
         BearerFormat = "JWT",
-        Description = "Enter 'Bearer' followed by a space and the JWT token."
+        Description = "Enter 'Bearer {votre_token"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -71,21 +71,22 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+    
+    // Docs
+    
 });
 
 // 🔹 Configuration de l’injection de dépendances (DI)
 builder.Services.AddScoped<IUserService, UserService>(); // Service métier
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // Accès aux données
 builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
+builder.Services.AddScoped<IObpService, ObpService>();
 
 // Ajouter HttpClient et le service OBP
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ObpService>();
 
 builder.Services.AddControllers();
-
-
-
 var app = builder.Build();
 
 // 🔹 Activer Swagger en mode développement

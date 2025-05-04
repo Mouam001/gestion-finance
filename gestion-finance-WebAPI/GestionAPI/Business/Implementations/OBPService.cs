@@ -1,22 +1,26 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Business.Interfaces;
+using Common.DTO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Business.Implementations
 {
-    public class ObpService
+    public class ObpService : IObpService
     {
         private readonly HttpClient _httpClient;
         private string _accessToken;
 
         private const string ApiUrl = "https://apisandbox.openbankproject.com";
-        private const string ConsumerKey = "2hp1wokighzsg1sulh4p3pgvc2dmnp0ymegi45up"; // Remplace avec ta clé API
-        private const string Username = "timo.fi.29@example.com";
-        private const string Password = "6addcd";
+        private const string ConsumerKey = "2hp1wokighzsg1sulh4p3pgvc2dmnp0ymegi45up";
+        private const string Username = "katja.fi.29@example.com";
+        private const string Password = "ca0317";
 
         public ObpService(HttpClient httpClient)
         {
@@ -24,318 +28,169 @@ namespace Business.Implementations
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public async Task<string> GetAccessTokenAsync()
+        private async Task<string> GetAccessTokenAsync()
         {
             if (!string.IsNullOrEmpty(_accessToken))
                 return _accessToken;
 
-            // 🔹 Ajouter DirectLogin dans l'en-tête (au lieu du body)
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", 
+            _httpClient.DefaultRequestHeaders.Add("Authorization",
                 $"DirectLogin username={Username},password={Password},consumer_key={ConsumerKey}");
 
-            // 🔹 Envoyer la requête d'authentification
             var response = await _httpClient.PostAsync($"{ApiUrl}/my/logins/direct", null);
-            string responseJson = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"Réponse API Auth JSON: {responseJson}");
+            var responseJson = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
                 throw new Exception($"Erreur lors de l'authentification : {responseJson}");
-            }
 
-            // 🔹 Extraire et retourner le token
             var responseObject = JObject.Parse(responseJson);
             _accessToken = responseObject["token"]?.ToString();
 
             if (string.IsNullOrEmpty(_accessToken))
-            {
                 throw new Exception("Le token d'accès est vide !");
-            }
 
             return _accessToken;
         }
-        
-        public async Task<List<Bank>> GetBanksAsync()
+
+        public async Task<List<BankDto>> GetBanksAsync()
         {
-            var response = await _httpClient.GetAsync("https://apisandbox.openbankproject.com/obp/v5.1.0/banks");
+            var response = await _httpClient.GetAsync($"{ApiUrl}/obp/v4.0.0/banks");
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Erreur lors de la récupération des banques : {response.StatusCode} - {response.ReasonPhrase}");
-            }
+                throw new Exception($"Erreur lors de la récupération des banques : {response.StatusCode}");
 
-            string responseJson = await response.Content.ReadAsStringAsync();
-
-            // Désérialisation de la réponse JSON sans bank_routings
-            var banksResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<BankListResponse>(responseJson);
-            return banksResponse.Banks;
+            var json = await response.Content.ReadAsStringAsync();
+            var obj = JObject.Parse(json);
+            return obj["banks"].ToObject<List<BankDto>>();
         }
-        
-        public async Task<string> GetUserAccountsAsync(string bankId)
-        {
-            string token = await GetAccessTokenAsync();
 
+        
+        public async Task<List<BankAccountDetailsDto>> GetUserBanksAsync()
+        {
+            var token = await GetAccessTokenAsync();
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"DirectLogin token={token}");
+            
+            var response = await _httpClient.GetAsync($"{ApiUrl}/obp/v5.1.0/banks/rbs/accounts");
+            var json = await response.Content.ReadAsStringAsync();
+            
+            if(!response.IsSuccessStatusCode)
+                throw new Exception($"Erreur lors de la récupération des comptes utilisateurs : {json}");
+            var accounts = JArray.Parse(json);
 
-            var response = await _httpClient.GetAsync($"{ApiUrl}/obp/v5.1.0/banks/{bankId}/accounts");
-            string responseJson = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"Réponse API Get User Accounts JSON: {responseJson}");
-
-            if (!response.IsSuccessStatusCode)
+            return accounts.Select(acc => new BankAccountDetailsDto
             {
-                throw new Exception($"Erreur lors de la récupération des comptes de l'utilisateur : {responseJson}");
-            }
-
-            return responseJson;
-        }
-        
-        public async Task<List<BankAccountDetails>> GetUserBanksAsync(string bankId)
-        {
-            string accountsJson = await GetUserAccountsAsync(bankId);
-
-            // Vérifier si la réponse est un tableau (array) ou un objet (lorsque vous travaillez avec une liste)
-            JArray accountsArray = JArray.Parse(accountsJson);  // Utiliser JArray pour gérer les tableaux JSON
-
-            // 🔹 Extraire les informations sur les comptes bancaires
-            var bankAccounts = accountsArray
-                .Select(acc => new BankAccountDetails
+                Id = acc["id"].ToString(),
+                Label = acc["label"].ToString(),
+                BankId = acc["bank"].ToString(),
+                ViewAvailable = acc["views_available"]?.Select(view => new ViewDetailsDto
                 {
-                    Id = acc["id"]?.ToString(),
-                    Label = acc["label"]?.ToString(),
-                    BankId = acc["bank_id"]?.ToString(),
-                    ViewsAvailable = acc["views_available"]?.Select(view => new ViewDetails
-                    {
-                        Id = view["id"]?.ToString(),
-                        ShortName = view["short_name"]?.ToString(),
-                        IsPublic = view["is_public"]?.ToObject<bool>() ?? false
-                    }).ToList() ?? new List<ViewDetails>()
-                })
-                .ToList();
-
-            Console.WriteLine($"Banques associées aux comptes de l'utilisateur: {string.Join(", ", bankAccounts.Select(acc => acc.BankId))}");
-
-            return bankAccounts;
+                    Id = view["id"].ToString(),
+                    Shortname = view["short_name"].ToString(),
+                    IsPublic = view["is_public"].ToString()
+                }).ToList() ?? new List<ViewDetailsDto>()
+            }).ToList();
         }
-        
-        public async Task<string> CreateAccountAsync(string userId, string bankId, string accountType, double initialBalance)
+
+        public async Task<string> CreatAccountAsync(string userId, string bankId)
         {
-            // Assurez-vous que vous utilisez l'URL correcte pour OBP
-            var apiUrl = "https://apisandbox.openbankproject.com"; // URL de l'API OBP Sandbox
+            var token = await GetAccessTokenAsync();
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DirectLogin", $"token={token}");
 
             var accountData = new
             {
                 user_id = userId,
-                label = $"{accountType} Account",
-                product_code = $"{bankId}_{accountType}",
-                balance = new { currency = "EUR", amount = initialBalance },
-                branch_id = "Branch1", // Ajuste selon ta configuration
-                account_routings = new[]
-                {
+                label = "New Account",
+                product_code = "PRODUCT_001",
+                balance = new { currency = "EUR", amount = 1000 },
+                branch_id = "Branch1",
+                account_routings = new[] {
                     new { scheme = "OBP", address = bankId }
                 }
             };
 
-            var jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(accountData);
-            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonConvert.SerializeObject(accountData), Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{apiUrl}/obp/v4.0.0/banks/{bankId}/accounts", content);
+            var response = await _httpClient.PostAsync($"{ApiUrl}/obp/v4.0.0/banks/{bankId}/accounts", content);
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Erreur lors de la création du compte bancaire : {response.StatusCode} - {response.ReasonPhrase}");
-            }
+                throw new Exception($"Erreur lors de la création du compte bancaire : {response.StatusCode}");
 
             return await response.Content.ReadAsStringAsync();
         }
-        
+
         public async Task<string> GetAccountDetailsAsync(string bankId, string accountId)
         {
-            string token = await GetAccessTokenAsync();
-            var url = $"https://apisandbox.openbankproject.com/obp/v5.1.0/banks/{bankId}/accounts/{accountId}/balances";
+            var token = await GetAccessTokenAsync();
+            var url = $"{ApiUrl}/obp/v5.1.0/banks/{bankId}/accounts/{accountId}/balances";
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Authorization", $"DirectLogin token={token}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("DirectLogin", $"token={token}");
+
             var response = await _httpClient.SendAsync(request);
             return await response.Content.ReadAsStringAsync();
         }
 
-      
-        
-        public async Task<string> GetmyBanksAsync()
+        public async Task<List<TransactionDto>> GetTransactionsAsync(string bankId, string accountId)
         {
-            string token = await GetAccessTokenAsync();
-            var request = new HttpRequestMessage(HttpMethod.Get, "https://apisandbox.openbankproject.com/obp/v4.0.0/my/banks");
-            request.Headers.Add("Authorization", $"DirectLogin token={token}");
-            var response = await _httpClient.SendAsync(request);
-            return await response.Content.ReadAsStringAsync();
-        }
-        
-        public async Task<List<Transaction>> GetTransactionsAsync(string bankId, string accountId, string viewId)
-        {
-            string token = await GetAccessTokenAsync();
-
+            var token = await GetAccessTokenAsync();
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"DirectLogin token={token}");
 
+            var viewId = "owner"; // par défaut, ou à passer en paramètre
             var uri = $"{ApiUrl}/obp/v5.1.0/banks/{bankId}/accounts/{accountId}/{viewId}/transactions";
+
             var response = await _httpClient.GetAsync(uri);
-            string responseJson = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-                throw new Exception($"Error retrieving transactions: {responseJson}");
+                throw new Exception($"Erreur lors de la récupération des transactions : {json}");
 
-            var transactionsData = JsonConvert.DeserializeObject<TransactionResponse>(responseJson);
+            var transactions = JObject.Parse(json)["transactions"];
 
-            return transactionsData?.Transactions?.Select(t => new Transaction
+            return transactions.Select(t => new TransactionDto
             {
-                Id = t.Id,
-                Type = t.Details?.Type,
-                Description = t.Details?.Description,
-                Amount = t.Details?.Value?.Amount ?? 0,
-                Currency = t.Details?.Value?.Currency,
-                PostedDate = t.Details?.PostedDate ?? DateTime.MinValue,
-                CompletedDate = t.Details?.CompletedDate ?? DateTime.MinValue
-            }).ToList() ?? new List<Transaction>();
+                Id = (string)t["id"],
+                Type = (string)t["details"]?["type"],
+                Description = (string)t["details"]?["description"],
+                Amount = decimal.TryParse(Convert.ToString(t["details"]?["value"]?["amount"]), System.Globalization.NumberStyles.Any,
+                         System.Globalization.CultureInfo.InvariantCulture,out var amt) ? amt : 0,
+                Currency = (string)t["details"]?["value"]?["currency"],
+                PostedDate = DateTime.TryParse((string)t["details"]?["posted"], out var posted) ? posted : DateTime.MinValue,
+                CompletedDate = DateTime.TryParse((string)t["details"]?["completed"], out var completed) ? completed : DateTime.MinValue
+            }).ToList();
         }
-        
-        public async Task<List<Account>> GetAccountsAsync()
+
+        public async Task<List<AccountDto>> GetAccountsAsync()
         {
-            string token = await GetAccessTokenAsync();
+            var token = await GetAccessTokenAsync();
             var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiUrl}/obp/v5.1.0/my/accounts");
             request.Headers.Authorization = new AuthenticationHeaderValue("DirectLogin", $"token={token}");
 
             var response = await _httpClient.SendAsync(request);
-
             if (!response.IsSuccessStatusCode)
+                throw new Exception("Erreur lors de la récupération des comptes");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var parsed = JObject.Parse(json);
+
+            return parsed["accounts"].Select(acc => new AccountDto
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Error retrieving accounts: {error}");
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(content);
-
-            var accounts = json["accounts"]
-                .Select(a => new Account
-                {
-                    Id = (string)a["id"],
-                    Label = (string)a["label"],
-                    BankId = (string)a["bank_id"],
-                    Views = a["views"].Select(v => (string)v["id"]).ToList()
-                }).ToList();
-
-            return accounts;
+                Id = (string)acc["id"],
+                Label = (string)acc["label"],
+                BankId = (string)acc["bank_id"],
+                Views = acc["views"]?.Select(v => (string)v["id"]).ToList() ?? new List<string>()
+            }).ToList();
         }
 
-        
-        public class BankListResponse
+        public async Task<string> GetMyBanksRawAsync()
         {
-            [JsonProperty("banks")]
-            public List<Bank> Banks { get; set; }
+            var token = await GetAccessTokenAsync();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiUrl}/obp/v4.0.0/my/banks");
+            request.Headers.Authorization = new AuthenticationHeaderValue("DirectLogin", $"token={token}");
+
+            var response = await _httpClient.SendAsync(request);
+            return await response.Content.ReadAsStringAsync();
         }
-
-        public class Bank
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
-
-            [JsonProperty("short_name")]
-            public string ShortName { get; set; }
-
-            [JsonProperty("full_name")]
-            public string FullName { get; set; }
-
-            [JsonProperty("logo")]
-            public string Logo { get; set; }
-
-            [JsonProperty("website")]
-            public string Website { get; set; }
-        }
-        
-        public class BankAccountDetails
-        {
-            public string Id { get; set; }
-            public string Label { get; set; }
-            public string BankId { get; set; }
-            public List<ViewDetails> ViewsAvailable { get; set; }
-        }
-
-// Classe pour stocker les informations sur les vues disponibles
-        public class ViewDetails
-        {
-            public string Id { get; set; }
-            public string ShortName { get; set; }
-            public bool IsPublic { get; set; }
-        }
-       
-        
-        public class Transaction
-        {
-            public string Id { get; set; }
-            public string Type { get; set; }
-            public string Description { get; set; }
-            public decimal Amount { get; set; }
-            public string Currency { get; set; }
-            public DateTime PostedDate { get; set; }
-            public DateTime CompletedDate { get; set; }
-        }
-        
-        public class TransactionResponse
-        {
-            [JsonProperty("transactions")]
-            public List<TransactionJson> Transactions { get; set; }
-        }
-
-        public class TransactionJson
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
-
-            [JsonProperty("details")]
-            public TransactionDetailsJson Details { get; set; }
-        }
-
-        public class TransactionDetailsJson
-        {
-            [JsonProperty("type")]
-            public string Type { get; set; }
-
-            [JsonProperty("description")]
-            public string Description { get; set; }
-
-            [JsonProperty("value")]
-            public AmountJson Value { get; set; }
-
-            [JsonProperty("posted")]
-            public DateTime PostedDate { get; set; }
-
-            [JsonProperty("completed")]
-            public DateTime CompletedDate { get; set; }
-        }
-
-        public class AmountJson
-        {
-            [JsonProperty("currency")]
-            public string Currency { get; set; }
-
-            [JsonProperty("amount")]
-            public decimal Amount { get; set; }
-        }
-        
-        public class Account
-        {
-            public string Id { get; set; }
-            public string Label { get; set; }
-            public string BankId { get; set; }
-            public List<string> Views { get; set; }
-        }
-
-
-
     }
 }
-
-

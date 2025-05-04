@@ -55,9 +55,7 @@ namespace Business.Implementations
             };
         }
 
-
-        
-        
+        // Méthode d'authentification
         
         public async Task<UserDto> AuthenticateAsync(string email, string password)
         {
