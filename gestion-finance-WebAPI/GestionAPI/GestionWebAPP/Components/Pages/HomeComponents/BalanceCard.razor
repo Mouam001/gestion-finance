@@ -1,16 +1,10 @@
-@using System.ComponentModel.DataAnnotations
+<div class="card blue">
+    <h4>💼 Solde actuel</h4>
+    <p class="amount">@Amount.ToString("C")</p>
+    <p class="muted">+@Variation par rapport au mois précédent</p>
+</div>
 
 @code {
-    [Parameter]
-    public string Title { get; set; } = "💰 Solde";
-
-    [Parameter]
-    public string Amount { get; set; } = "0,00 €";
+    [Parameter] public decimal Amount { get; set; }
+    [Parameter] public string Variation { get; set; }
 }
-
-<div class="card stat-card balance">
-    <div class="card-body">
-        <h5>@Title</h5>
-        <p class="amount">@Amount</p>
-    </div>
-</div>
