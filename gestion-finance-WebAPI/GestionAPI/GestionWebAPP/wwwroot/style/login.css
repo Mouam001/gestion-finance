@@ -4,7 +4,7 @@
     border-radius: 8px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     width: 100vh;
-    
+
     text-align: center;
 }
 
@@ -50,21 +50,7 @@ h2 {
     text-decoration: underline;
 }
 
-/* Bouton */
-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-}
 
-button:hover {
-    background-color: #0056b3;
-}
 
 /* Lien inscription */
 .register-link {
@@ -79,4 +65,19 @@ button:hover {
 
 .register-link a:hover {
     text-decoration: underline;
+}
+
+.loginbutton {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.loginbutton:hover {
+    background-color: #0056b3;
 }

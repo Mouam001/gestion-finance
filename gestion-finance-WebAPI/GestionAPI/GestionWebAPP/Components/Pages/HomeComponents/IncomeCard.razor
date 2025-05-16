@@ -1,0 +1,11 @@
+<div class="card green">
+    <h4>🤑 Revenus</h4>
+    <p class="amount">@Amount.ToString("C")</p>
+    <p class="muted">@Sources sources — Moyenne: @Average €</p>
+</div>
+
+@code {
+    [Parameter] public decimal Amount { get; set; }
+    [Parameter] public int Sources { get; set; }
+    [Parameter] public decimal Average { get; set; }
+}

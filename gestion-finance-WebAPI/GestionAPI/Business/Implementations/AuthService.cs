@@ -68,5 +68,12 @@ namespace Business.Implementations
 
             return new JwtSecurityTokenHandler().WriteToken(token); // Générer le jeton
         }
+        
+        public async Task Logout()
+        {
+            
+            await Task.CompletedTask; // Placeholder async
+        }
+
     }
 }

@@ -1,22 +1,12 @@
-@code {
-    private List<Transaction> Transactions = new()
+<div class="card">
+    <h4>🧾 Dernières transactions</h4>
+    @foreach (var tx in Transactions)
     {
-        new Transaction { Date = DateTime.Now, Amount = 50.0, Description = "Restaurant" },
-        new Transaction { Date = DateTime.Now.AddDays(-1), Amount = 100.0, Description = "Shopping" }
-    };
-}
-<ul>
-    @foreach (var transaction in Transactions)
-    {
-        <li>@transaction.Date.ToShortDateString() - @transaction.Description: @transaction.Amount.ToString("C")</li>
+        var cssClass = tx.Amount >= 0 ? "right positive" : "right negative";
+        <p>@tx.Date – @tx.Label <span class="@cssClass">@tx.Amount.ToString("C")</span></p>
     }
-</ul>
+</div>
 
 @code {
-    public class Transaction
-    {
-        public DateTime Date { get; set; }
-        public double Amount { get; set; }
-        public string Description { get; set; } = string.Empty;
-    }
+    [Parameter] public List<Home.Transaction> Transactions { get; set; } = [];
 }

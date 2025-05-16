@@ -1,23 +1,36 @@
 ﻿@page "/"
+@layout MainLayout
+
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using GestionWebAPP.Components.Pages.HomeComponents
+@using GestionWebAPP.Components.Layout
+@using static GestionWebAPP.Components.Pages.HomeComponents.TransactionList
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime  
+<link href="style/dashboard.css" rel="stylesheet" />
 
 @if (isUserAuthenticated)
 {
-    <!-- Afficher les éléments de la page d'accueil si l'utilisateur est authentifié -->
-    <BalanceCard Title="Total Balance" Amount="3420" Icon="fa-wallet" />
-    <BalanceCard Title="Income" Amount="2700" Icon="fa-arrow-up" />
-    <BalanceCard Title="Expenses" Amount="3200" Icon="fa-arrow-down" />
+    <h2>Tableau de bord</h2>
+    <div class="dashboard p-4">
+        <div class="cards-container">
+            <BalanceCard Amount="3420" Variation="+5%" />
+            <IncomeCard Amount="2700" Sources="3" Average="2600" />
+            <ExpenseCard Amount="3200" MainCategory="Loisirs" />
+        </div>
 
-    <BudgetChart />
-    <TransactionsChart />
-    <DashboardChart />
-    <TransactionList />
-    
+        <div class="grid-two">
+            <ExpensesChart Title="📊 Répartition des dépenses" />
+            <TransactionList Transactions="@transactions"/>
+        </div>
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6"><SavingGoal Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30" /></div>
+            <div class="col-md-6"><DashboardActions /></div>
+        </div>
+    </div>
+
 }
 else
 {
@@ -62,4 +75,14 @@ else
             StateHasChanged();
         }
     }
+}
+
+@code {
+    private List<Transaction> transactions = new()
+    {
+        new Transaction("13/04/2025", "Restaurant", 50),
+        new Transaction("12/04/2025", "Shopping", -100)
+    };
+
+    public record Transaction(string Date, string Label, decimal Amount);
 }
