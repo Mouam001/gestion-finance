@@ -1,0 +1,35 @@
+name: CI/CD - Build and Deploy
+
+on:
+  push:
+    branches: [ main ]  # Déclenchement sur la branche principale
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v3
+
+      - name: 🧰 Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.115' 
+
+      - name: 🧪 Restore des packages
+        run: dotnet restore
+
+      - name: Build Backend
+        run: dotnet build GestionAPI/GestionAPI.csproj --configuration Release
+
+      - name: Build Frontend (Blazor)
+        run: dotnet build GestionWebAPP/GestionWebAPP.csproj --configuration Release
+
+      - name: Publish Backend
+        run: dotnet publish GestionAPI/GestionAPI.csproj --configuration Release --output ./publish-back
+
+      - name: Publish Frontend (Blazor)
+        run: dotnet publish GestionWebAPP/GestionWebAPP.csproj -c Release -o ./publish-front
+
+     
