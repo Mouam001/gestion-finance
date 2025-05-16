@@ -9,25 +9,22 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime  
+<link href="style/dashboard.css" rel="stylesheet" />
 
 @if (isUserAuthenticated)
 {
-    <div class="dashboard-container p-4">
-        <h2 class="mb-4">Tableau de bord</h2>
-
-        <div class="row mb-4">
-            <div class="col-md-4"><BalanceCard Title="💰 Solde" Amount="3 420,00 €" /></div>
-            <div class="col-md-4"><IncomeCard Title="📥 Revenus" Amount="2 700,00 €" /></div>
-            <div class="col-md-4"><ExpenseCard Title="📤 Dépenses" Amount="3 200,00 €" /></div>
+    <h2>Tableau de bord</h2>
+    <div class="dashboard p-4">
+        <div class="cards-container">
+            <BalanceCard Amount="3420" Variation="+5%" />
+            <IncomeCard Amount="2700" Sources="3" Average="2600" />
+            <ExpenseCard Amount="3200" MainCategory="Loisirs" />
         </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6"><ExpensesChart Title="📊 Répartition des dépenses" /></div>
-            <div class="col-md-6">
-                <TransactionList Transactions="Transactions"/>
-            </div>
+        <div class="grid-two">
+            <ExpensesChart Title="📊 Répartition des dépenses" />
+            <TransactionList Transactions="@transactions"/>
         </div>
-
         <div class="row align-items-center mb-4">
             <div class="col-md-6"><SavingGoal Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30" /></div>
             <div class="col-md-6"><DashboardActions /></div>
@@ -80,12 +77,12 @@ else
     }
 }
 
-@code{
-    public List<Transaction> Transactions=new List<Transaction>()
+@code {
+    private List<Transaction> transactions = new()
     {
-        new Transaction { Date = DateTime.Parse("2025-04-13"), Description = "Restaurant", Amount = -50.00m, Type = TransactionList.TransactionType.Expense },
-        new Transaction { Date = DateTime.Parse("2025-04-12"), Description = "Shopping", Amount = -100.00m, Type = TransactionList.TransactionType.Expense },
-        new Transaction { Date = DateTime.Parse("2025-04-10"), Description = "Salaire", Amount = 2000.00m, Type = TransactionList.TransactionType.Income }
+        new Transaction("13/04/2025", "Restaurant", 50),
+        new Transaction("12/04/2025", "Shopping", -100)
     };
 
+    public record Transaction(string Date, string Label, decimal Amount);
 }
