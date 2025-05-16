@@ -1,0 +1,10 @@
+<div class="card red">
+    <h4>🧾 Dépenses</h4>
+    <p class="amount">@Amount.ToString("C")</p>
+    <p class="muted">Catégorie principale: @MainCategory</p>
+</div>
+
+@code {
+    [Parameter] public decimal Amount { get; set; }
+    [Parameter] public string MainCategory { get; set; }
+}

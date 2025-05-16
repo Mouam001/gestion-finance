@@ -1,0 +1,109 @@
+/* ========== Layout Général ========== */
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: space-between;
+}
+
+.grid-two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* ========== Carte Générique ========== */
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    flex: 1 1 300px;
+    min-width: 260px;
+}
+
+/* ========== Titres et valeurs ========== */
+
+.card h4 {
+    margin-top: 0;
+}
+
+.amount {
+    font-size: 1.6rem;
+    font-weight: bold;
+}
+
+.muted {
+    color: gray;
+    font-size: 0.9rem;
+}
+
+/* ========== Couleurs des cartes ========== */
+
+.blue { background: #007bff; color: white; }
+.green { background: #28a745; color: white; }
+.red { background: #dc3545; color: white; }
+
+/* ========== Valeurs à droite ========== */
+
+.right {
+    float: right;
+    font-weight: bold;
+}
+
+.right.positive { color: green; }
+.right.negative { color: red; }
+
+/* ========== Barre de progression ========== */
+
+.progress-bar {
+    background-color: #eee;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.progress {
+    background-color: orange;
+    height: 100%;
+}
+
+/* ========== Breakpoints Responsifs ========== */
+
+@media (max-width: 1024px) {
+    .card {
+        flex: 1 1 48%;
+    }
+}
+
+@media (max-width: 768px) {
+    .cards-container {
+        flex-direction: column;
+    }
+
+    .grid-two {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .amount {
+        font-size: 1.3rem;
+    }
+
+    .muted {
+        font-size: 0.8rem;
+    }
+
+    .card {
+        padding: 0.8rem;
+    }
+}

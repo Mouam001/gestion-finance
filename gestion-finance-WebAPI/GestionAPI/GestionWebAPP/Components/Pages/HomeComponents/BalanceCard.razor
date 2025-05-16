@@ -1,10 +1,10 @@
-@code {
-    [Parameter] public string Title { get; set; } = "Balance";
-    [Parameter] public double Amount { get; set; }
-    [Parameter] public string Icon { get; set; } = "fa-wallet";
-}
-<div class="card balance-card">
-    <i class="@Icon"></i>
-    <h3>@Title</h3>
-    <p>@Amount.ToString("C")</p>
+<div class="card blue">
+    <h4>💼 Solde actuel</h4>
+    <p class="amount">@Amount.ToString("C")</p>
+    <p class="muted">+@Variation par rapport au mois précédent</p>
 </div>
+
+@code {
+    [Parameter] public decimal Amount { get; set; }
+    [Parameter] public string Variation { get; set; }
+}

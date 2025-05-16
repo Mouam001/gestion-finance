@@ -91,5 +91,23 @@ namespace GestionAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            try
+            {
+                return Ok(new { message = "Déconnexion réussie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
     }
+    
+    
 }
