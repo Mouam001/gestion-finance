@@ -263,3 +263,4 @@ __pycache__/
 *.pyc
 GestionAPI/logs/
 dotnet
+.db-shm
