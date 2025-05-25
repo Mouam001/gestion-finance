@@ -50,12 +50,22 @@ builder.Services.AddSwaggerGen(c =>
     // Ajouter la configuration du JWT dans Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        In = ParameterLocation.Header,
+        Description = "JWT  Authorization header using th Bearer scheme. Exemple : \"Bearer {token}\"",
         Name = "Authorization",
+        In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        BearerFormat = "JWT",
-        Description = "Enter 'Bearer {votre_token"
+        Scheme = "Bearer"
     });
+    
+    c.AddSecurityDefinition("DirectLogin", new OpenApiSecurityScheme
+    {
+        Description = "JDirectLogin OBP  : DirectLogin token=VOTRE_TOKEN",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -69,6 +79,18 @@ builder.Services.AddSwaggerGen(c =>
                 }
             },
             new string[] {}
+        },
+        
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "DirectLogin"
+                }
+            },
+           Array.Empty<string>()
         }
     });
     
