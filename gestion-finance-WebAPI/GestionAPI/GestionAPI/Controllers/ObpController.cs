@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GestionAPI.Controllers
 {
     [ApiController]
-    [Route("api/opb")]
+    [Route("api/obp")]
 
     public class ObpController : ControllerBase
     {
