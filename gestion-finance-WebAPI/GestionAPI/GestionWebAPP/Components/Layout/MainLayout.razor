@@ -35,33 +35,22 @@
 
 @code {
     private bool isAuthenticated;
-    private bool alreadyRendered;
+    private bool firstRenderDone = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!alreadyRendered)
+        if (firstRender && !firstRenderDone)
         {
-            alreadyRendered = true;
+            firstRenderDone = true;
 
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
+            var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
 
-            isAuthenticated = user.Identity?.IsAuthenticated == true;
+            isAuthenticated = user.Identity?.IsAuthenticated == true || !string.IsNullOrEmpty(obpToken);
 
-            // Ne tente JS interop que si on est bien en contexte interactif
-            if (JSRuntime is not null)
-            {
-                try
-                {
-                    await JSRuntime.InvokeVoidAsync("console.log", "L'utilisateur est connecté ? " + isAuthenticated);
-                }
-                catch
-                {
-                   
-                }
-            }
-
-            StateHasChanged(); // Pour forcer le re-render avec isAuthenticated à true
+            await JSRuntime.InvokeVoidAsync("console.log", "L'utilisateur est authentifié ? " + isAuthenticated);
+            StateHasChanged(); // ON met à jour l'affichage
         }
     }
 
@@ -77,10 +66,15 @@
         }
 
         await LocalStorage.RemoveItemAsync("authToken");
+        await LocalStorage.RemoveItemAsync("obpToken");
+        
         if (AuthenticationStateProvider is CustomAuthenticationStateProvider customProvider)
         {
             customProvider.MarkUserAsLoggedOut();
         }
+
+        isAuthenticated = false;
+        StateHasChanged();
 
         Navigation.NavigateTo("/login", true);
     }
