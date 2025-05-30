@@ -1,4 +1,85 @@
-<div class="text-end">
-    <button class="btn btn-primary me-2">➕ Ajouter une transaction</button>
+@using System.ComponentModel.DataAnnotations
+@using Common.DTO
+
+<div class="text-end mb-3">
+    <button class="btn btn-primary me-2" @onclick="ShowForm">➕ Ajouter une transaction</button>
     <button class="btn btn-outline-secondary">📈 Voir rapports</button>
 </div>
+
+@if (formVisible)
+{
+    <div class="modal-overlay fade-in" @onclick="OnOverlayClick">
+        <div class="modal-content" @onclick:stopPropagation>
+            <EditForm Model="@newTransaction" OnValidSubmit="SubmitTransaction">
+                <DataAnnotationsValidator />
+                
+                <div class="mb-3">
+                    <label class="form-label">Type</label>
+                    <InputText class="form-control" @bind-Value="newTransaction.Type" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <InputText class="form-control" @bind-Value="newTransaction.Description" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Montant</label>
+                    <InputNumber class="form-control" @bind-Value="newTransaction.Amount" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Devise</label>
+                    <InputText class="form-control" @bind-Value="newTransaction.Currency" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Date d'envoi</label>
+                    <InputDate class="form-control" @bind-Value="newTransaction.PostedDate" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Date de traitement</label>
+                    <InputDate class="form-control" @bind-Value="newTransaction.CompletedDate" />
+                </div>
+
+                <button type="submit" class="btn btn-success">💾 Enregistrer</button>
+                <button type="button" class="btn btn-secondary ms-2" @onclick="HideForm">❌ Annuler</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private bool formVisible = false;
+
+    private TransactionDto newTransaction = new()
+    {
+        PostedDate = DateTime.Today,
+        CompletedDate = DateTime.Today
+    };
+
+    private void ShowForm() => formVisible = true;
+
+    private void HideForm()
+    {
+        formVisible = false;
+        newTransaction = new TransactionDto
+        {
+            PostedDate = DateTime.Today,
+            CompletedDate = DateTime.Today
+        };
+    }
+
+    private void SubmitTransaction()
+    {
+        Console.WriteLine($"Ajout : {newTransaction.Description}, {newTransaction.Amount} {newTransaction.Currency}");
+        // Tu peux appeler un service ici pour sauvegarder en base ou via API
+        HideForm();
+    }
+
+    private void OnOverlayClick()
+    {
+        HideForm();
+    }
+}
