@@ -9,8 +9,9 @@
 @code {
     private async Task DownloadReport()
     {
-        var start = new DateTime(2024, 1, 1);
-        var end = new DateTime(2024, 12, 31);
+        var start = new DateTime(2025, 4, 12);
+        var end = new DateTime(2025, 5, 13);
+        
 
         var url = $"/api/transactions/getTransactions?start={start:O}&end={end:O}";
 
