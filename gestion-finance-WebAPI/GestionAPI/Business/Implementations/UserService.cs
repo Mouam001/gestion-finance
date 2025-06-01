@@ -63,7 +63,7 @@ namespace Business.Implementations
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.Password))
             {
-                return null; // Si l'utilisateur n'est pas trouvé ou le mot de passe est incorrect
+                return null; 
             }
 
             return new UserDto

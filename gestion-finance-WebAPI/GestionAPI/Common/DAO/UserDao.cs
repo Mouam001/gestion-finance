@@ -1,3 +1,4 @@
+using Common.DTO;
 namespace Common.DAO;
 
 public class UserDao
@@ -10,4 +11,5 @@ public class UserDao
     public float Phone { get; set; }
     public string Address { get; set; }
     public float BalanceInit { get; set; } = 80;
+    public ICollection<TransactionDao> Transactions { get; set; } = new List<TransactionDao>();
 }

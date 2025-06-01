@@ -177,7 +177,7 @@ else
 
             foreach (var tx in txList)
             {
-                var type = tx.Type ?? "Type incconue";
+                var type = tx.ObpType ?? "Type incconue";
                 var description = tx.Description ?? "Type incconue";
                 transactions.Add(new Transaction_(type, description, tx.Amount));
 

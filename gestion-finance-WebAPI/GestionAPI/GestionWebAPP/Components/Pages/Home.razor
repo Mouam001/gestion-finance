@@ -1,14 +1,20 @@
 ﻿@page "/"
 @layout MainLayout
+@using Business.Implementations
+@using Common.DTO
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using GestionWebAPP.Components.Pages.HomeComponents
 @using GestionWebAPP.Components.Layout
+@using GestionWebAPP.Services
 @using static GestionWebAPP.Components.Pages.HomeComponents.TransactionList
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IJSRuntime JSRuntime  
+@inject TransactionApiService TransactionService
+@inject AuthStateProvider AuthStateProvider
+@inject UserApiService UserService
 <link href="style/dashboard.css" rel="stylesheet" />
 
 @if (isUserAuthenticated)
@@ -16,9 +22,9 @@
     <h2>Tableau de bord</h2>
     <div class="dashboard p-4">
         <div class="cards-container">
-            <BalanceCard Amount="3420" Variation="+5%"  IsObpUser="false"/>
-            <IncomeCard Amount="2700" Sources="3" Average="2600"  IsObpUser="false"/>
-            <ExpenseCard Amount="3200" MainCategory="Loisirs" IsObpUser="false"/>
+            <BalanceCard Amount="@currentBalance" Variation="+5%" />
+            <IncomeCard Amount="@totalIncome" Sources="@incomeCount" Average="@averageIncome" />
+            <ExpenseCard Amount="@totalExpense" MainCategory="Loisirs" />
             <Chart_OBP IsObpUser="false"/>
         </div>
 
@@ -41,7 +47,20 @@ else
 
 @code {
     private bool isUserAuthenticated;
-    
+    private bool initialized = false;
+
+    private List<TransactionDto> transactions = new();
+    public record Transaction(string Date, string Label, decimal Amount);
+
+    private decimal userBalanceInit = 0;
+    private decimal currentBalance = 0;
+
+    private decimal totalIncome = 0;
+    private int incomeCount = 0;
+    private decimal averageIncome = 0;
+
+    private decimal totalExpense = 0;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -53,11 +72,11 @@ else
             var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
             isUserAuthenticated = user.Identity.IsAuthenticated || !string.IsNullOrEmpty(obpToken);
             var isObpUser = !string.IsNullOrEmpty(obpToken);
-            
+
             await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
             await JSRuntime.InvokeVoidAsync("console.log", $"TOKEN OBP detecté : {obpToken != null}");
 
-            
+
             if (!isUserAuthenticated)
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
@@ -68,23 +87,66 @@ else
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur OBP authentifié, affichage de la page d'accueil OBP");
                 Navigation.NavigateTo("/home-obp");
             }
+
             else
             {
-                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
-                Navigation.NavigateTo("/");
+                try
+                {
+                    var token = await AuthStateProvider.GetTokenAsync();
+
+                    // Récupération des infos utilisateur
+                    var currentUser = await UserService.GetCurrentUserAsync(token);
+                    userBalanceInit = Convert.ToDecimal(currentUser?.BalanceInit ?? 0);
+
+
+                    // Récupération des transactions
+                    transactions = await TransactionService.GetUserTransactionsAsync(token);
+
+                    // Traitement des données
+                    var incomes = transactions.Where(t => t.Amount > 0).ToList();
+                    var expenses = transactions.Where(t => t.Amount < 0).ToList();
+
+                    totalIncome = incomes.Sum(t => t.Amount);
+                    incomeCount = incomes.Count;
+                    averageIncome = incomeCount > 0 ? totalIncome / incomeCount : 0;
+
+                    totalExpense = expenses.Sum(t => Math.Abs(t.Amount));
+
+                    // 💰 Solde actuel
+                    currentBalance = userBalanceInit + totalIncome - totalExpense;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erreur : " + ex.Message);
+                }
+
+                {
+                    await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+                    Navigation.NavigateTo("/");
+                }
+
+                StateHasChanged();
             }
-            
+        }
+    }
+
+    private async Task ReloadTransactionsAsync()
+        {
+            var token = await AuthStateProvider.GetTokenAsync();
+            transactions = await TransactionService.GetUserTransactionsAsync(token);
+
+            // Recalcul après ajout de transaction
+            var incomes = transactions.Where(t => t.Amount > 0).ToList();
+            var expenses = transactions.Where(t => t.Amount < 0).ToList();
+
+            totalIncome = incomes.Sum(t => t.Amount);
+            incomeCount = incomes.Count;
+            averageIncome = incomeCount > 0 ? totalIncome / incomeCount : 0;
+
+            totalExpense = expenses.Sum(t => Math.Abs(t.Amount));
+            currentBalance = userBalanceInit + totalIncome - totalExpense;
+
             StateHasChanged();
         }
     }
-}
-
-@code {
-    private List<Transaction> transactions = new()
-    {
-        new Transaction("13/04/2025", "Restaurant", 50),
-        new Transaction("12/04/2025", "Shopping", -100)
-    };
-
-    public record Transaction(string Date, string Label, decimal Amount);
-}
+    
