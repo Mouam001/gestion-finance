@@ -24,20 +24,15 @@ namespace Business.Implementations
 
         public async Task<AuthenticateResponse> Login(LoginRequest request)
         {
-            // Authentifier l'utilisateur
             var user = await _userService.AuthenticateAsync(request.Email, request.Password);
             Console.Write(user);
-
-            // Si l'utilisateur est nul ou le mot de passe est incorrect
+            
             if (user == null )
             {
                 throw new Exception("Invalid email or password");
             }
-
-            // Générer le jeton JWT
+            
             var token = GenerateJwtToken(user);
-
-            // Retourner la réponse avec le jeton et l'utilisateur
             return new AuthenticateResponse
             {
                 Token = token,
@@ -59,20 +54,20 @@ namespace Business.Implementations
             };
 
             var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"],  // Issuer
-                _configuration["Jwt:Issuer"],  // Audience
-                claims,                         // Claims
-                expires: DateTime.Now.AddMinutes(30), // Durée de validité
+                _configuration["Jwt:Issuer"], 
+                _configuration["Jwt:Issuer"],  
+                claims,                        
+                expires: DateTime.Now.AddMinutes(30), 
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token); // Générer le jeton
+            return new JwtSecurityTokenHandler().WriteToken(token); 
         }
         
         public async Task Logout()
         {
             
-            await Task.CompletedTask; // Placeholder async
+            await Task.CompletedTask; 
         }
 
     }

@@ -102,6 +102,8 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<IUserService, UserService>(); // Service métier
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // Accès aux données
 builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IObpService, ObpService>();
 
 // Ajouter HttpClient et le service OBP

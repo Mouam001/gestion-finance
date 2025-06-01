@@ -89,7 +89,7 @@ namespace GestionAPI.Controllers
             try
             {
                 var cleanedToken = obpToken.Replace("Bearer ", "").Replace("DirectLogin token=", "").Trim();
-                var results = await _obpService.GetTransactionsAsync(obpToken, bankId, accountId);
+                var results = await _obpService.GetTransactionsAsync(cleanedToken,bankId, accountId);
                 return Ok(results);
             }
             catch (Exception ex)

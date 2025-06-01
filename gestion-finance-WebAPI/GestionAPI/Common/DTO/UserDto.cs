@@ -10,4 +10,6 @@ public class UserDto
     public float Phone { get; set; }
     public string Address { get; set; }
     public float BalanceInit { get; set; } = 80;
+    public ICollection<TransactionDto> Transactions { get; set; } = new List<TransactionDto>();
+    
 }
