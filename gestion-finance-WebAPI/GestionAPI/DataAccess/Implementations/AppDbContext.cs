@@ -8,6 +8,7 @@ namespace DataAccess.Implementations
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<UserDao> Users { get; set; } // Table des utilisateurs
+        public DbSet<TransactionDao> Transactions { get; set; } // Table des transactions
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
