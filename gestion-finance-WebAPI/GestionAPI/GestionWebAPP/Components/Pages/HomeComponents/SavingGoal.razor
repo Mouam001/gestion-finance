@@ -10,12 +10,16 @@
 
     [Parameter]
     public int Progress { get; set; } = 30;
+    [Parameter] public bool IsObpUser { get; set; } 
 }
 
-<div class="card p-3">
-    <h5>🎯 Objectif d’épargne</h5>
-    <p>@Goal : @AmountSaved / @GoalAmount</p>
-    <div class="progress">
-        <div class="progress-bar bg-warning" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
+@if (!IsObpUser)
+{
+    <div class="card p-3">
+        <h5>🎯 Objectif d’épargne</h5>
+        <p>@Goal : @AmountSaved / @GoalAmount</p>
+        <div class="progress">
+            <div class="progress-bar bg-warning" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
     </div>
-</div>
+}

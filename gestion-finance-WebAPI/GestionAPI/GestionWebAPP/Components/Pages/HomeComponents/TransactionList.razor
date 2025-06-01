@@ -1,30 +1,65 @@
 @using Common.DTO
+@inject IJSRuntime JSRuntime
+
 <div class="card">
-    <h4>🧾 Dernières transactions</h4>
-    @foreach (var tx in Transactions)
-    {
-        <p>@tx.CompletedDate.ToString("dd/MM/yyyy") – @tx.Description 
-           <span class="@GetAmountCssClass(tx.Amount)">
-               @tx.Amount.ToString("C")
-           </span>
-        </p>
-    }
+    <h4>🧾 Transactions</h4>
 
+    @if ((Transactions != null && Transactions.Count > 0) || (Transactions_ != null && Transactions_.Count > 0))
+    {
+        <div class="transaction-table-container">
+            <table class="table">
+                <thead>
+                <tr>
+                    @if (Transactions_ != null && Transactions_.Count > 0)
+                    {
+                        <th>Type</th>
+                    }
+                    else
+                    {
+                        <th>Date</th>
+                    }
+                    <th>Description</th>
+                    <th>Montant (€)</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var tx in Transactions)
+                {
+                    var cssClass = tx.Amount >= 0 ? "text-success" : "text-danger";
+                    <tr>
+                        <td>@tx.Date</td>
+                        <td>@tx.Label</td>
+                        <td class="@cssClass">@tx.Amount.ToString("F2")</td>
+                    </tr>
+                }
+
+                @foreach (var tx in Transactions_)
+                {
+                    var cssClass = tx.Amount >= 0 ? "text-success" : "text-danger";
+                    <tr>
+                        <td>@tx.Type</td>
+                        <td>@tx.Label</td>
+                        <td class="@cssClass">@tx.Amount.ToString("F2")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p>Aucune transaction disponible.</p>
+    }
 </div>
-<style>
-    .text-danger {
-        color: red;
-    }
-    
-    .text-success {
-        color: green;
-    }
 
-</style>
 @code {
-    [Parameter] public List<TransactionDto> Transactions { get; set; } = [];
-    private string GetAmountCssClass(decimal amount)
+    [Parameter] public List<Home.Transaction> Transactions { get; set; } = new();
+    [Parameter] public List<Home_OBP.Transaction_> Transactions_ { get; set; } = new();
+
+    protected override void OnParametersSet()
     {
-        return amount < 0 ? "text-danger" : "text-success";
+        JSRuntime.InvokeVoidAsync("console.log", $"Transactions classiques : {System.Text.Json.JsonSerializer.Serialize(Transactions)}");
+        JSRuntime.InvokeVoidAsync("console.log", $"Transactions OBP : {System.Text.Json.JsonSerializer.Serialize(Transactions_)}");
     }
 }
+

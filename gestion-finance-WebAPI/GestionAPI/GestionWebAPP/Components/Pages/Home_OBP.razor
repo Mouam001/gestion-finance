@@ -1,0 +1,223 @@
+@page "/home-obp"
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using Blazored.LocalStorage
+@using Common.DTO
+@using GestionWebAPP.Components.Layout
+@using GestionWebAPP.Components.Pages.HomeComponents
+@layout MainLayout
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+<link href="style/dashboard.css" rel="stylesheet"/>
+<link href="style/mainObp.css" rel="stylesheet"/>
+
+@if (isUserAuthenticated)
+{
+    <h2>Tableau de bord</h2>
+    <h4>📌 Données OBP récupérées</h4>
+    <ul>
+        <li><strong> Solde :</strong>@totalBalance €</li>
+        <li><strong> Revenus :</strong>@revenus €</li>
+        <li><strong> Dépenses :</strong>@depenses €</li>
+    </ul>
+    <div class="dashboard p-4">
+        @if (userAccounts.Count > 1)
+        {
+            <div class="mb-4">
+                <label for="accountSelector">🔀  Choisir le Compte:</label>
+                <select id="accountSelector" class="form-select" @onchange="OnAccountChanged">
+                    @foreach (var account in userAccounts)
+                    {
+                        <option value="@($"{account.BankId}|{account.Id}")"
+                                selected="@(selectBankId == account.BankId && selectAccountId == account.Id)">
+                        @account.Label (@account.BankId)
+                        </option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="cards-container">
+            <BalanceCard Amount="@totalBalance" Variation="@variation" IsObpUser="true"/>
+            <IncomeCard Amount="@revenus" Sources="3" Average="revenus" IsObpUser="true"/>
+            <ExpenseCard Amount="@depenses" MainCategory="Divers" IsObpUser="true"/>
+            <Chart_OBP IsObpUser="@isUserAuthenticated" Labels="@expenseLabels" Values="@expenseValues"/>
+        </div>
+
+        <div class="grid-two">
+            <TransactionList Transactions_="@transactions"/>
+        </div>
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <SavingGoal IsObpUser="@IsObpUser" Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30"/>
+            </div>
+            <div class="col-md-6">
+                <DashboardActions IsObpUser="@IsObpUser"/>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Redirection vers la page de connexion...</p>
+}
+
+@code {
+    private List<AccountDto> userAccounts = new();
+    private string selectBankId;
+    private string selectAccountId;
+    [Parameter] public bool IsObpUser { get; set; } 
+    private bool isUserAuthenticated;
+    private readonly List<Transaction_> transactions = new();
+    private decimal totalBalance;
+    private decimal revenus;
+    private decimal depenses;
+    private readonly string variation = "+0%";
+    private readonly List<string> expenseLabels = new();
+    private readonly List<decimal?> expenseValues = new();
+
+    public record Transaction_(string Type, string Label, decimal Amount);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "vérification du token OBP");
+
+            var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
+            if (string.IsNullOrWhiteSpace(obpToken))
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Token OBP absent, redirection vers /login");
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            isUserAuthenticated = true;
+            IsObpUser = true;
+            await LoadObpData(obpToken);
+            await JSRuntime.InvokeVoidAsync("console.log", "Chargement des données OBP terminé");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadObpData(string token)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "récuperation des comptes OBP");
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/obp/accounts");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var accountsResponse = await Http.SendAsync(request);
+            
+            if (!accountsResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine("erreur : impossible de récupérer les comptes OBP");
+                return;
+            }
+
+            var accountsJson = await accountsResponse.Content.ReadAsStringAsync();
+            var accounts = JsonSerializer.Deserialize<List<AccountDto>>(
+                accountsJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+            if (accounts == null || accounts.Count == 0)
+            {
+                Console.WriteLine("Aucun compte OBP trouvé.");
+                return;
+            }
+
+            userAccounts = accounts;
+            selectBankId = accounts[0].BankId;
+            selectAccountId = accounts[0].Id;
+            var firstAccount = accounts.First();
+            await JSRuntime.InvokeVoidAsync("console.log", $"Premier compte trouvé : {firstAccount.BankId} ({firstAccount.Id})");
+            await JSRuntime.InvokeVoidAsync("console.log", $"Nombre de comptes trouvés : {userAccounts.Count}");
+            await FetchTransactions(token, firstAccount.BankId, firstAccount.Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération des comptes OBP : {ex.Message}");
+        }
+    }
+
+    private async Task FetchTransactions(string token, string bankId, string accountId)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "Recuperation des transactions OBP...");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"api/obp/transactions/{bankId}/{accountId}");
+            request.Headers.Authorization =  new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Erreur lors de la récupération des transactions OBP");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var txList = System.Text.Json.JsonSerializer.Deserialize<List<TransactionDto>>(
+                json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
+            if (txList == null || txList.Count == 0)
+            {
+                Console.WriteLine(" Aucun transaction OBP récuperer");
+                return;
+            }
+
+            totalBalance = 0;
+            revenus = 0;
+            depenses = 0;
+            transactions.Clear();
+            expenseLabels.Clear();
+            expenseValues.Clear();
+
+            foreach (var tx in txList)
+            {
+                var type = tx.Type ?? "Type incconue";
+                var description = tx.Description ?? "Type incconue";
+                transactions.Add(new Transaction_(type, description, tx.Amount));
+
+                if (tx.Amount > 0)
+                    revenus += tx.Amount;
+                else
+                    depenses += Math.Abs(tx.Amount);
+                expenseLabels.Add(type);
+                expenseValues.Add(tx.Amount);
+            }
+
+            totalBalance = revenus - depenses;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des transactions OBP {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("Console.Error", $"Erreur lors du chargement des transactions OBP : {ex.Message}");
+        }
+    }
+
+    private async Task OnAccountChanged(ChangeEventArgs e)
+    {
+        var selectedValue = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(selectedValue)) return;
+        
+        var parts = selectedValue.Split('|');
+        if(parts.Length != 2) return;
+
+        selectBankId = parts[0];
+        selectAccountId = parts[1];
+        
+        var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
+
+        if (string.IsNullOrWhiteSpace(obpToken)) return;
+        
+        await FetchTransactions(obpToken, selectBankId, selectAccountId);
+        await JSRuntime.InvokeVoidAsync("console.log", $"Compte sélectionné : {selectBankId} ({selectAccountId})");
+        StateHasChanged();
+    }
+
+}
+ 
+
