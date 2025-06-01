@@ -264,3 +264,7 @@ __pycache__/
 GestionAPI/logs/
 dotnet
 .db-shm
+
+GestionAPI/gestion.db
+GestionAPI/gestion.db-wal
+GestionAPI/gestion.db-shm
