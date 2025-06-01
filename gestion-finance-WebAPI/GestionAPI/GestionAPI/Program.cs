@@ -10,10 +10,12 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Configuration de l'authentification JWT
 builder.Services.AddAuthentication(options =>

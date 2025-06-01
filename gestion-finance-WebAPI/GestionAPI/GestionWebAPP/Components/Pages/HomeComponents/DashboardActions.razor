@@ -4,6 +4,8 @@
 @using GestionWebAPP.Services
 @inject TransactionApiService TransactionService
 @inject AuthStateProvider AuthStateProvider
+@inject HttpClient Http
+@inject IJSRuntime JS
 @code
 {
     [Parameter] public bool IsObpUser { get; set; }
@@ -62,13 +64,35 @@
     {
         HideForm();
     }
+    
+    private async Task DownloadReport()
+    {
+        var start = new DateTime(2025, 4, 12);
+        var end = new DateTime(2025, 5, 13);
+        
+
+        var url = $"/api/transactions/getTransactions?start={start:O}&end={end:O}";
+
+        var response = await Http.GetAsync(url);
+        if (response.IsSuccessStatusCode)
+        {
+            var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+            var base64 = Convert.ToBase64String(pdfBytes);
+            var fileName = $"transactions_{start:yyyyMMdd}_{end:yyyyMMdd}.pdf";
+            await JS.InvokeVoidAsync("downloadFileFromBase64", base64, fileName);
+        }
+        else
+        {
+            Console.WriteLine("Erreur de téléchargement du fichier PDF.");
+        }
+    }
 }
 
 @if (!IsObpUser)
 {
   <div class="text-end mb-3">
     <button class="btn btn-primary me-2" @onclick="ShowForm">➕ Ajouter une transaction</button>
-    <button class="btn btn-outline-secondary">📈 Voir rapports</button>
+    <button class="btn btn-outline-secondary" @onclick="DownloadReport">📈 Voir rapports</button>
 </div>
 
 @if (formVisible)
