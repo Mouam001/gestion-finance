@@ -1,9 +1,11 @@
 @page "/login"
+@using System.ComponentModel.DataAnnotations
 @using GestionWebAPP.Services
 @using Common.Requests
-@using System.ComponentModel.DataAnnotations
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <div class="container">
     <h2>Sign in to your account</h2>
@@ -12,7 +14,7 @@
         <div class="input-group">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" @bind="LoginModel.Email" placeholder="name@example.com">
-            @if (EmailError != null)
+            @if (!string.IsNullOrEmpty(EmailError))
             {
                 <span class="error-message">@EmailError</span>
             }
@@ -21,10 +23,18 @@
         <div class="input-group">
             <label for="password">Password</label>
             <input type="password" id="password" name="password" @bind="LoginModel.Password" placeholder="********">
-            @if (PasswordError != null)
+            @if (!string.IsNullOrEmpty(PasswordError))
             {
                 <span class="error-message">@PasswordError</span>
             }
+        </div>
+        
+        <!-- Checkbox for user OBP -->
+        <div class="input-group">
+            <label>
+                <input type="checkbox" id="isOPB" @bind="LoginModel.IsObpUser">
+                Connexion with Open Bank Project
+            </label>
         </div>
 
         <div class="options">
@@ -37,7 +47,7 @@
 
         <button class="loginbutton" type="submit">Sign in</button>
 
-        @if (LoginError != null)
+        @if (!string.IsNullOrEmpty(LoginError))
         {
             <div class="error-message">@LoginError</div>
         }
@@ -48,51 +58,73 @@
 
 @code {
     private ModelLogin LoginModel { get; set; } = new();
-    private string EmailError { get; set; }
-    private string PasswordError { get; set; }
-    private string LoginError { get; set; }
+    private string EmailError = "";
+    private string PasswordError = "";
+    private string LoginError = "";
 
     private async Task OnSubmit()
     {
-        // Réinitialiser les erreurs avant de commencer la validation
-        EmailError = null;
-        PasswordError = null;
-        LoginError = null;
-
-        // Validation avant soumission
+        EmailError = PasswordError = LoginError = "";
+        
         if (string.IsNullOrWhiteSpace(LoginModel.Email))
-        {
             EmailError = "Email is required.";
-        }
-
         if (string.IsNullOrWhiteSpace(LoginModel.Password))
-        {
             PasswordError = "Password is required.";
-        }
-
-        // Si des erreurs existent, ne pas envoyer la requête
         if (!string.IsNullOrEmpty(EmailError) || !string.IsNullOrEmpty(PasswordError))
-        {
             return;
-        }
 
-        // Créer la requête de connexion
-        var loginRequest = new LoginRequest
+        if (LoginModel.IsObpUser)
         {
-            Email = LoginModel.Email,
-            Password = LoginModel.Password
-        };
+            //Connexion avec Open Bank Project
+            try
+            {
+                var response = await Http.PostAsJsonAsync("api/obp/loginOPB", new
+                {
+                    UsernameOPB = LoginModel.Email,
+                    PasswordOPB = LoginModel.Password
+                });
 
-        // Tentative de connexion
-        var isSuccess = await AuthService.Login(loginRequest);
-
-        if (isSuccess)
-        {
-            Navigation.NavigateTo("/");
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ObpLoginResponse>();
+                    if (!string.IsNullOrEmpty(result?.Token))
+                    {
+                        await LocalStorage.SetItemAsync("obpToken", result.Token);
+                        await LocalStorage.SetItemAsync("isObpAuthenticated", "true");
+                        Navigation.NavigateTo("/home-obp");
+                    }
+                    else
+                    {
+                        LoginError = "Token OBP is null or empty.";
+                    }
+                }
+                else
+                {
+                    LoginError = "Identifiants OBP invalides";
+                }
+            }
+            catch (Exception ex)
+            {
+                LoginError = $" Erreur lors de la connexion avec OBP : {ex.Message}";
+            }
         }
+        // Connexion normale
         else
         {
-            LoginError = "Invalid email or password.";
+            var loginRequest = new LoginRequest
+            {
+                Email = LoginModel.Email,
+                Password = LoginModel.Password,
+            };
+            var isSucess = await AuthService.Login(loginRequest);
+            if (isSucess)
+            {
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                LoginError = "Invalid email or password.";
+            }
         }
     }
 
@@ -105,5 +137,12 @@
         public string Password { get; set; } = "";
 
         public bool RememberMe { get; set; } = false;
+        public bool IsObpUser { get; set; } = false; 
     }
+
+    public class ObpLoginResponse
+    {
+        public string Token { get; set; }
+    }
+
 }

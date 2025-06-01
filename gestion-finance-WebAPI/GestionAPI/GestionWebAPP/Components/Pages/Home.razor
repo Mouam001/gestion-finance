@@ -1,6 +1,5 @@
 ﻿@page "/"
 @layout MainLayout
-
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using GestionWebAPP.Components.Pages.HomeComponents
@@ -8,6 +7,7 @@
 @using static GestionWebAPP.Components.Pages.HomeComponents.TransactionList
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IJSRuntime JSRuntime  
 <link href="style/dashboard.css" rel="stylesheet" />
 
@@ -16,9 +16,10 @@
     <h2>Tableau de bord</h2>
     <div class="dashboard p-4">
         <div class="cards-container">
-            <BalanceCard Amount="3420" Variation="+5%" />
-            <IncomeCard Amount="2700" Sources="3" Average="2600" />
-            <ExpenseCard Amount="3200" MainCategory="Loisirs" />
+            <BalanceCard Amount="3420" Variation="+5%"  IsObpUser="false"/>
+            <IncomeCard Amount="2700" Sources="3" Average="2600"  IsObpUser="false"/>
+            <ExpenseCard Amount="3200" MainCategory="Loisirs" IsObpUser="false"/>
+            <Chart_OBP IsObpUser="false"/>
         </div>
 
         <div class="grid-two">
@@ -40,38 +41,39 @@ else
 
 @code {
     private bool isUserAuthenticated;
-
-    // Appelé après le premier rendu de la page
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Ajout d'un log dans la console pour déboguer
-            await JSRuntime.InvokeVoidAsync("console.log", "OnAfterRenderAsync appelé, vérification de l'état de l'authentification...");
+            await JSRuntime.InvokeVoidAsync("console.log", "vérification de l'état de l'authentification...");
 
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authenticationState.User;
-
-            // Affichage de l'état d'authentification dans la console pour vérifier
+            var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
+            isUserAuthenticated = user.Identity.IsAuthenticated || !string.IsNullOrEmpty(obpToken);
+            var isObpUser = !string.IsNullOrEmpty(obpToken);
+            
             await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
+            await JSRuntime.InvokeVoidAsync("console.log", $"TOKEN OBP detecté : {obpToken != null}");
 
-            isUserAuthenticated = user.Identity.IsAuthenticated;
-
-            // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+            
             if (!isUserAuthenticated)
             {
-                // Ajout du message dans la console pour voir si la redirection est bien appelée
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
-                // Rediriger vers la page de connexion
                 Navigation.NavigateTo("/login");
+            }
+            else if (isObpUser)
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur OBP authentifié, affichage de la page d'accueil OBP");
+                Navigation.NavigateTo("/home-obp");
             }
             else
             {
-                // Si l'utilisateur est authentifié, afficher un message dans la console
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+                Navigation.NavigateTo("/");
             }
-
-            // Forcer un re-rendu
+            
             StateHasChanged();
         }
     }
