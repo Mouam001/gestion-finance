@@ -134,7 +134,7 @@ namespace Business.Implementations
             return await response.Content.ReadAsStringAsync();
         }
 
-        public async Task<List<TransactionDto>> GetTransactionsAsync(string obpToken, string bankId, string accountId)
+        public async Task<List<TransactionDao>> GetTransactionsAsync(string obpToken, string bankId, string accountId)
         {
 
             setTokenHeader(obpToken);
@@ -150,9 +150,9 @@ namespace Business.Implementations
 
             var transactions = JObject.Parse(json)["transactions"];
 
-            return transactions.Select(t => new TransactionDto
+            return transactions.Select(t => new TransactionDao
             {
-                Id = (string)t["id"],
+                Id = (int)t["id"],
                 Type = (string)t["details"]?["type"],
                 Description = (string)t["details"]?["description"],
                 Amount = decimal.TryParse(Convert.ToString(t["details"]?["value"]?["amount"]),

@@ -1,14 +1,19 @@
 ﻿@page "/"
 @layout MainLayout
 
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using GestionWebAPP.Components.Pages.HomeComponents
+@using GestionWebAPP.Services
+@using Common.DTO
 @using GestionWebAPP.Components.Layout
-@using static GestionWebAPP.Components.Pages.HomeComponents.TransactionList
+
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime  
+@inject IJSRuntime JSRuntime
+@inject AuthStateProvider AuthStateProvider
+@inject TransactionApiService TransactionService
+@inject UserApiService UserService
+
 <link href="style/dashboard.css" rel="stylesheet" />
 
 @if (isUserAuthenticated)
@@ -16,73 +21,111 @@
     <h2>Tableau de bord</h2>
     <div class="dashboard p-4">
         <div class="cards-container">
-            <BalanceCard Amount="3420" Variation="+5%" />
-            <IncomeCard Amount="2700" Sources="3" Average="2600" />
-            <ExpenseCard Amount="3200" MainCategory="Loisirs" />
+            <BalanceCard Amount="@currentBalance" Variation="+5%" />
+            <IncomeCard Amount="@totalIncome" Sources="@incomeCount" Average="@averageIncome" />
+            <ExpenseCard Amount="@totalExpense" MainCategory="Loisirs" />
         </div>
 
         <div class="grid-two">
             <ExpensesChart Title="📊 Répartition des dépenses" />
-            <TransactionList Transactions="@transactions"/>
+            <TransactionList Transactions="@transactions" />
         </div>
         <div class="row align-items-center mb-4">
-            <div class="col-md-6"><SavingGoal Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30" /></div>
-            <div class="col-md-6"><DashboardActions /></div>
+            <div class="col-md-6">
+                <SavingGoal Goal="Vacances été" AmountSaved="300 €" GoalAmount="1 000 €" Progress="30" />
+            </div>
+            <div class="col-md-6">
+                <DashboardActions OnTransactionCreated="ReloadTransactionsAsync" />
+            </div>
         </div>
     </div>
-
 }
 else
 {
-    <!-- Afficher un message ou rediriger -->
     <p>Redirection vers la page de connexion...</p>
 }
 
 @code {
     private bool isUserAuthenticated;
+    private bool initialized = false;
 
-    // Appelé après le premier rendu de la page
+    private List<TransactionDto> transactions = new();
+
+    private decimal userBalanceInit = 0;
+    private decimal currentBalance = 0;
+
+    private decimal totalIncome = 0;
+    private int incomeCount = 0;
+    private decimal averageIncome = 0;
+
+    private decimal totalExpense = 0;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !initialized)
         {
-            // Ajout d'un log dans la console pour déboguer
-            await JSRuntime.InvokeVoidAsync("console.log", "OnAfterRenderAsync appelé, vérification de l'état de l'authentification...");
+            initialized = true;
 
-            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authenticationState.User;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            isUserAuthenticated = user.Identity?.IsAuthenticated ?? false;
 
-            // Affichage de l'état d'authentification dans la console pour vérifier
-            await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
-
-            isUserAuthenticated = user.Identity.IsAuthenticated;
-
-            // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
             if (!isUserAuthenticated)
             {
-                // Ajout du message dans la console pour voir si la redirection est bien appelée
-                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
-                // Rediriger vers la page de connexion
                 Navigation.NavigateTo("/login");
-            }
-            else
-            {
-                // Si l'utilisateur est authentifié, afficher un message dans la console
-                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+                return;
             }
 
-            // Forcer un re-rendu
+            try
+            {
+                var token = await AuthStateProvider.GetTokenAsync();
+
+                // Récupération des infos utilisateur
+                var currentUser = await UserService.GetCurrentUserAsync(token);
+                userBalanceInit = Convert.ToDecimal(currentUser?.BalanceInit ?? 0);
+
+
+                // Récupération des transactions
+                transactions = await TransactionService.GetUserTransactionsAsync(token);
+
+                // Traitement des données
+                var incomes = transactions.Where(t => t.Amount > 0).ToList();
+                var expenses = transactions.Where(t => t.Amount < 0).ToList();
+
+                totalIncome = incomes.Sum(t => t.Amount);
+                incomeCount = incomes.Count;
+                averageIncome = incomeCount > 0 ? totalIncome / incomeCount : 0;
+
+                totalExpense = expenses.Sum(t => Math.Abs(t.Amount));
+
+                // 💰 Solde actuel
+                currentBalance = userBalanceInit + totalIncome - totalExpense;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erreur : " + ex.Message);
+            }
+
             StateHasChanged();
         }
     }
-}
 
-@code {
-    private List<Transaction> transactions = new()
+    private async Task ReloadTransactionsAsync()
     {
-        new Transaction("13/04/2025", "Restaurant", 50),
-        new Transaction("12/04/2025", "Shopping", -100)
-    };
+        var token = await AuthStateProvider.GetTokenAsync();
+        transactions = await TransactionService.GetUserTransactionsAsync(token);
 
-    public record Transaction(string Date, string Label, decimal Amount);
+        // Recalcul après ajout de transaction
+        var incomes = transactions.Where(t => t.Amount > 0).ToList();
+        var expenses = transactions.Where(t => t.Amount < 0).ToList();
+
+        totalIncome = incomes.Sum(t => t.Amount);
+        incomeCount = incomes.Count;
+        averageIncome = incomeCount > 0 ? totalIncome / incomeCount : 0;
+
+        totalExpense = expenses.Sum(t => Math.Abs(t.Amount));
+        currentBalance = userBalanceInit + totalIncome - totalExpense;
+
+        StateHasChanged();
+    }
 }

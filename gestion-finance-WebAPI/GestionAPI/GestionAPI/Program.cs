@@ -103,6 +103,8 @@ builder.Services.AddScoped<IUserService, UserService>(); // Service métier
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // Accès aux données
 builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
 builder.Services.AddScoped<IObpService, ObpService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>(); // Service métier
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 // Ajouter HttpClient et le service OBP
 builder.Services.AddHttpClient();

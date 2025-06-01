@@ -45,6 +45,18 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<TransactionApiService>();
+builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
+builder.Services.AddScoped<AuthStateProvider>();
+builder.Services.AddScoped<UserApiService>();
+
+builder.Services.AddScoped<TransactionApiService>();
+builder.Services.AddScoped(sp =>
+{
+    var client = new HttpClient { BaseAddress = new Uri("http://localhost:5120/") };
+    return client;
+});
+
 
 
 // Enregistrement des services AuthService

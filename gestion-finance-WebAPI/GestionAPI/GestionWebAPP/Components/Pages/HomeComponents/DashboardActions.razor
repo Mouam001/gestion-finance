@@ -1,5 +1,8 @@
 @using System.ComponentModel.DataAnnotations
 @using Common.DTO
+@using Common.Requests
+@using GestionWebAPP.Services
+
 
 <div class="text-end mb-3">
     <button class="btn btn-primary me-2" @onclick="ShowForm">➕ Ajouter une transaction</button>
@@ -15,7 +18,24 @@
                 
                 <div class="mb-3">
                     <label class="form-label">Type</label>
-                    <InputText class="form-control" @bind-Value="newTransaction.Type" />
+                    <InputSelect class="form-control" @bind-Value="newTransaction.Type">
+                        <option value="">-- Sélectionner --</option>
+                        @foreach (var t in Enum.GetValues<TransactionType>())
+                        {
+                            <option value="@t">@t.GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Catégorie</label>
+                    <InputSelect class="form-control" @bind-Value="newTransaction.Category">
+                        <option value="">-- Sélectionner --</option>
+                        @foreach (var c in Enum.GetValues<TransactionCategory>())
+                        {
+                            <option value="@c">@c.GetDisplayName()</option>
+                        }
+                    </InputSelect>
                 </div>
 
                 <div class="mb-3">
@@ -30,7 +50,13 @@
 
                 <div class="mb-3">
                     <label class="form-label">Devise</label>
-                    <InputText class="form-control" @bind-Value="newTransaction.Currency" />
+                    <InputSelect class="form-control" @bind-Value="newTransaction.Currency">
+                        <option value="">-- Sélectionner --</option>
+                        @foreach (var currency in Enum.GetValues<CurrencyCode>())
+                        {
+                            <option value="@currency">@currency.GetDisplayName()</option>
+                        }
+                    </InputSelect>
                 </div>
 
                 <div class="mb-3">
@@ -49,6 +75,9 @@
         </div>
     </div>
 }
+
+@inject TransactionApiService TransactionService
+@inject AuthStateProvider AuthStateProvider
 
 @code {
     private bool formVisible = false;
@@ -69,13 +98,37 @@
             PostedDate = DateTime.Today,
             CompletedDate = DateTime.Today
         };
+        StateHasChanged();
     }
 
-    private void SubmitTransaction()
+    [Parameter] public EventCallback OnTransactionCreated { get; set; }
+
+    private async Task SubmitTransaction()
     {
-        Console.WriteLine($"Ajout : {newTransaction.Description}, {newTransaction.Amount} {newTransaction.Currency}");
-        // Tu peux appeler un service ici pour sauvegarder en base ou via API
-        HideForm();
+        var request = new CreateTransactionRequest
+        {
+            Description = newTransaction.Description,
+            Amount = newTransaction.Amount,
+            Currency = newTransaction.Currency?.ToString(),
+            Type = newTransaction.Type?.ToString(),
+            Category = newTransaction.Category?.ToString(),
+            PostedDate = newTransaction.PostedDate,
+            CompletedDate = newTransaction.CompletedDate
+        };
+
+        var token = await AuthStateProvider.GetTokenAsync();
+        var result = await TransactionService.CreateTransactionAsync(request, token);
+
+        if (result.Success)
+        {
+            Console.WriteLine("Transaction enregistrée avec succès");
+            HideForm();
+            await OnTransactionCreated.InvokeAsync();
+        }
+        else
+        {
+            Console.WriteLine($"Erreur lors de l'enregistrement : {result.ErrorMessage}");
+        }
     }
 
     private void OnOverlayClick()

@@ -60,7 +60,7 @@ namespace Business.Implementations
 
             var token = new JwtSecurityToken(
                 _configuration["Jwt:Issuer"],  // Issuer
-                _configuration["Jwt:Issuer"],  // Audience
+                _configuration["Jwt:Audience"],  // Audience
                 claims,                         // Claims
                 expires: DateTime.Now.AddMinutes(30), // Durée de validité
                 signingCredentials: creds
