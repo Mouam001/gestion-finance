@@ -1,16 +1,17 @@
-@if (!IsObpUser)
+@if (IsObpUser)
 {
-<div class="card-dash p-4 chart-card" style=" width: 100% !important;
+    <div class="card-dash p-4 chart-card" style=" width: 100% !important;
                                             max-width: 400px;
                                             height: auto !important;
                                             margin: 0 auto;
                                             display: block;">
-    <h5 class="mb-3">@Title</h5>
-    <Chart Config="_config1" @ref="_chart1"></Chart>
-</div>
+        <h5 class="mb-3">@Title</h5>
+        <Chart Config="_config1" @ref="_chart1"></Chart>
+    </div>
 }
+
 @code {
-    [Parameter] public string Title { get; set; } ="";
+    [Parameter] public string Title { get; set; } = " 📊 Répartition des dépenses OBP";
     [Parameter] public bool IsObpUser { get; set; } 
     [Parameter] public List<string> Labels { get; set; } = new(); 
     [Parameter] public List<decimal?> Values { get; set; } = new(); 
@@ -21,15 +22,17 @@
     protected override async Task OnInitializedAsync()
     {
         _config1 = new PieChartConfig();
-        
-            _config1.Data.Labels = new List<string> { "Nourriture", "Transport", "Santé" };
+
+        if (IsObpUser)
+        {
+            _config1.Data.Labels = Labels;
             _config1.Data.Datasets.Add(new PieDataset()
             {
-                Label = "Dépenses normales",
-                Data = new List<Decimal?> { 30, 50, 20 },
-                BackgroundColor = new List<string> { "#FF6384", "#36A2EB", "#FFCE56" },
+                Label = "Dépenses OBP",
+                Data = Values,
+                BackgroundColor = new List<string> { "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0" },
                 HoverOffset = 4
             });
+        }
     }
-
 }

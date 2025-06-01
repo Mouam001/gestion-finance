@@ -16,9 +16,10 @@
     <h2>Tableau de bord</h2>
     <div class="dashboard p-4">
         <div class="cards-container">
-            <BalanceCard Amount="3420" Variation="+5%" />
-            <IncomeCard Amount="2700" Sources="3" Average="2600" />
-            <ExpenseCard Amount="3200" MainCategory="Loisirs" />
+            <BalanceCard Amount="3420" Variation="+5%"  IsObpUser="false"/>
+            <IncomeCard Amount="2700" Sources="3" Average="2600"  IsObpUser="false"/>
+            <ExpenseCard Amount="3200" MainCategory="Loisirs" IsObpUser="false"/>
+            <Chart_OBP IsObpUser="false"/>
         </div>
 
         <div class="grid-two">
@@ -51,20 +52,26 @@ else
             var user = authenticationState.User;
             var obpToken = await LocalStorage.GetItemAsync<string>("obpToken");
             isUserAuthenticated = user.Identity.IsAuthenticated || !string.IsNullOrEmpty(obpToken);
+            var isObpUser = !string.IsNullOrEmpty(obpToken);
             
             await JSRuntime.InvokeVoidAsync("console.log", $"L'utilisateur est authentifié ? {user.Identity.IsAuthenticated}");
             await JSRuntime.InvokeVoidAsync("console.log", $"TOKEN OBP detecté : {obpToken != null}");
 
-           
             
             if (!isUserAuthenticated)
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur non authentifié, redirection vers /login");
                 Navigation.NavigateTo("/login");
             }
+            else if (isObpUser)
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur OBP authentifié, affichage de la page d'accueil OBP");
+                Navigation.NavigateTo("/home-obp");
+            }
             else
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Utilisateur authentifié, affichage de la page d'accueil");
+                Navigation.NavigateTo("/");
             }
             
             StateHasChanged();

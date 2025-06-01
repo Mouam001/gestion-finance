@@ -1,11 +1,19 @@
 <div class="card green">
     <h4>🤑 Revenus</h4>
     <p class="amount">@Amount.ToString("C")</p>
-    <p class="muted">@Sources sources — Moyenne: @Average €</p>
+    @if (IsObpUser)
+    {
+        <p class="muted">Revenus bancaires synchronisés avec OBP</p>
+    }
+    else
+    {
+        <p class="muted">@Sources sources — Moyenne: @Average €</p>
+    }
 </div>
 
 @code {
     [Parameter] public decimal Amount { get; set; }
     [Parameter] public int Sources { get; set; }
     [Parameter] public decimal Average { get; set; }
+    [Parameter] public bool IsObpUser { get; set; }
 }

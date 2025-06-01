@@ -91,7 +91,7 @@
                     {
                         await LocalStorage.SetItemAsync("obpToken", result.Token);
                         await LocalStorage.SetItemAsync("isObpAuthenticated", "true");
-                        Navigation.NavigateTo("/");
+                        Navigation.NavigateTo("/home-obp");
                     }
                     else
                     {

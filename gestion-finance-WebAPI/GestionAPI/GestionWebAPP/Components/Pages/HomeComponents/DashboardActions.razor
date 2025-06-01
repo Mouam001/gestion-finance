@@ -1,4 +1,12 @@
-<div class="text-end">
-    <button class="btn btn-primary me-2">➕ Ajouter une transaction</button>
-    <button class="btn btn-outline-secondary">📈 Voir rapports</button>
-</div>
+@code
+{
+    [Parameter] public bool IsObpUser { get; set; }
+}
+
+@if (!IsObpUser)
+{
+    <div class="text-end">
+        <button class="btn btn-primary me-2">➕ Ajouter une transaction </button>
+        <button class="btn btn-outline-secondary">📈 Voir rapports</button>
+    </div>
+}
