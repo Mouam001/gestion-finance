@@ -99,7 +99,7 @@ Ces comptes sont déjà présents dans le sandbox OBP.
 | 🔄 Rafraîchissement manuel requis | Après connexion OBP, l'affichage peut nécessiter un refresh manuel                               |
 | 🔒 Déconnexion lente              | Le bouton logout peut ne pas déclencher la redirection immédiate                                 |
 | 🔐 Accès interdit pour OBP        | Les routes `/api/transaction` et `/api/user` ne fonctionnent que pour les utilisateurs standards |
-
+| 🔄 Ajout transaction /PDF         | Si on ajoute une transaction, il faut actualiser la page pour voir la transaction et son effet   |
 
 
 Contact : `mouammar8080ni@gmail.com` and `Celestin Goumou`
