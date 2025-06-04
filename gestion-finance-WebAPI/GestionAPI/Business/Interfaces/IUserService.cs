@@ -12,5 +12,6 @@ namespace Business.Interfaces
        Task<bool> DeleteUSer (int userId); // Supression 
        Task<UserDto> UpdateUser (int userId, UpdateUserRequest request); // Mise à jour
        Task<List<UserDto>> GetAllUsers (); // Récupérer tous les utilisateurs
+       Task<UserDto?> GetCurrentUserAsync(string jwtToken);
     }
 }

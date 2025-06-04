@@ -6,9 +6,9 @@ using Common.DTO;
 
 public static class PdfExporter
 {
-    public static byte[] ExportTransactions(List<TransactionDto> transactions, DateTime start, DateTime end)
+    public static byte[] ExportTransactions(List<TransactionDto> transactions, DateTime start, DateTime end,UserDto user)
     {
-        var doc = new TransactionsReportDocument(transactions, start, end);
+        var doc = new TransactionsReportDocument(transactions, start, end,user);
         return doc.GeneratePdf();
     }
 }

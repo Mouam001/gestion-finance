@@ -12,6 +12,7 @@ public enum TransactionCategory
     Santé,
     Assurance,
     Loisirs,
+    Salaire,
     Épargne
 }
 

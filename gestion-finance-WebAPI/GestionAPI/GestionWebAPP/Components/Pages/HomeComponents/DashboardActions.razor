@@ -65,35 +65,63 @@
         HideForm();
     }
     
+    private DateTime startDate = DateTime.Today.AddDays(-30);
+    private DateTime endDate = DateTime.Today;
+
     private async Task DownloadReport()
     {
-        var start = new DateTime(2025, 4, 12);
-        var end = new DateTime(2025, 5, 13);
-        
-
-        var url = $"/api/transactions/getTransactions?start={start:O}&end={end:O}";
-
-        var response = await Http.GetAsync(url);
-        if (response.IsSuccessStatusCode)
+        if (startDate > endDate)
         {
-            var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-            var base64 = Convert.ToBase64String(pdfBytes);
-            var fileName = $"transactions_{start:yyyyMMdd}_{end:yyyyMMdd}.pdf";
-            await JS.InvokeVoidAsync("downloadFileFromBase64", base64, fileName);
+            Console.WriteLine("❌ La date de début ne peut pas être après la date de fin.");
+            return;
         }
-        else
+
+        var url = $"/api/transaction/ExportTransactions?start={startDate:yyyy-MM-ddTHH:mm:ss}&end={endDate:yyyy-MM-ddTHH:mm:ss}";
+
+        try
         {
-            Console.WriteLine("Erreur de téléchargement du fichier PDF.");
+            var response = await Http.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var fileName = $"transactions_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.pdf";
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64, fileName);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Erreur lors du téléchargement : {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception lors du téléchargement : {ex.Message}");
         }
     }
+
+
 }
 
 @if (!IsObpUser)
 {
-  <div class="text-end mb-3">
-    <button class="btn btn-primary me-2" @onclick="ShowForm">➕ Ajouter une transaction</button>
-    <button class="btn btn-outline-secondary" @onclick="DownloadReport">📈 Voir rapports</button>
-</div>
+    <div class="text-end mb-3">
+        <button class="btn btn-primary me-2" @onclick="ShowForm">➕ Ajouter une transaction</button>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label>Date de début</label>
+            <InputDate @bind-Value="startDate" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label>Date de fin</label>
+            <InputDate @bind-Value="endDate" class="form-control" />
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button class="btn btn-outline-secondary" @onclick="DownloadReport">📥 Télécharger le PDF</button>
+        </div>
+    </div>
 
 @if (formVisible)
 {

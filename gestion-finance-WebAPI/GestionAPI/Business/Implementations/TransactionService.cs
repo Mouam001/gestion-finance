@@ -18,13 +18,17 @@ public class TransactionService : ITransactionService
     {
         var user = await _context.Users.FindAsync(userId);
         if (user == null) throw new Exception("Utilisateur non trouvé");
-
+        var amount = request.Amount;
+        if(Enum.TryParse<TransactionType>(request.Type, out var parsedType) && parsedType == TransactionType.Sortie)
+        {
+            amount = -Math.Abs(amount); 
+        }
         var transaction = new TransactionDao()
         {
             Type = request.Type,
-            Category = request.Category, // ← ici
+            Category = request.Category,
             Description = request.Description,
-            Amount = request.Amount,
+            Amount = amount,
             CompletedDate = request.CompletedDate,
             PostedDate = request.PostedDate,
             UserId = userId,
@@ -108,5 +112,27 @@ public class TransactionService : ITransactionService
             UserId = transaction.UserId
         };
     }
+    
+    public async Task<List<TransactionDto>> GetTransactions(DateTime startDate, DateTime endDate)
+    {
+        var transactions = await _context.Transactions
+            .Where(t => t.PostedDate >= startDate && t.PostedDate <= endDate)
+            .ToListAsync();
+
+        return transactions.Select(t => new TransactionDto
+        {
+            Id = t.Id,
+            UserId = t.UserId,
+            Type = Enum.TryParse<TransactionType>(t.Type, out var type) ? type : null,
+            Category = Enum.TryParse<TransactionCategory>(t.Category, out var cat) ? cat : null,
+            Description = t.Description,
+            Amount = t.Amount,
+            Currency = Enum.TryParse<CurrencyCode>(t.Currency, out var currency) ? currency : null,
+            CompletedDate = t.CompletedDate,
+            PostedDate = t.PostedDate
+        }).ToList();
+    }
+
+    
 
 }

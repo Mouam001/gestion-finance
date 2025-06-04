@@ -14,11 +14,13 @@ namespace Business.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly AppDbContext _context;
+        private readonly HttpClient _http;
 
-        public UserService(IUserRepository userRepository,AppDbContext context)
+        public UserService(IUserRepository userRepository,AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _userRepository = userRepository;
             _context = context;
+            _http = httpClientFactory.CreateClient();
         }
 
         public async Task<UserDto> RegisterUser(RegisterRequest request)
@@ -133,6 +135,25 @@ namespace Business.Implementations
                 Phone = user.Phone,
                 BalanceInit = user.BalanceInit
             }).ToList();
+        }
+        
+        public async Task<UserDto?> GetCurrentUserAsync(string jwtToken)
+        {
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await _http.GetAsync("http://localhost:5120/api/user/me");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Erreur lors de la récupération de l'utilisateur : {response.StatusCode}");
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            return System.Text.Json.JsonSerializer.Deserialize<UserDto>(json, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
     }
 }

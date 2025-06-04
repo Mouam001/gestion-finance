@@ -15,12 +15,12 @@ namespace GestionAPI.Controllers
     public class TransactionController : ControllerBase
     {
         private readonly ITransactionService _service;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IUserService _userService;
 
-        public TransactionController(ITransactionService service,IHttpClientFactory httpClientFactory)
+        public TransactionController(ITransactionService service, IUserService userService)
         {
             _service = service;
-            _httpClientFactory = httpClientFactory;
+            _userService = userService;
         }
 
         [Authorize]
@@ -71,24 +71,30 @@ namespace GestionAPI.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
-        [HttpGet("getTransactions")]
+        
+        [Authorize]
+        [HttpGet("ExportTransactions")]
         public async Task<IActionResult> ExportPdf([FromQuery] DateTime start, [FromQuery] DateTime end)
         {
-        
+           
+            var transactions = await _service.GetTransactions(start, end);
+            if (transactions == null || !transactions.Any())
+                return NotFound("Aucune transaction trouvée dans cette plage de dates.");
 
-            var httpClient = _httpClientFactory.CreateClient("TransactionsClient");
-            var requestUrl = $"/api/transactions";
+            // Extraction du token JWT
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-            var transactions = await httpClient.GetFromJsonAsync<List<TransactionDto>>(requestUrl);
+            
+            var user = await _userService.GetCurrentUserAsync(token);
+            if (user == null)
+                return Unauthorized("Impossible de récupérer les informations de l'utilisateur.");
+            
+            var pdfBytes = PdfExporter.ExportTransactions(transactions, start, end, user);
 
-            if (transactions == null)
-                return NotFound("Aucune transaction trouvée.");
-
-            var pdfBytes = PdfExporter.ExportTransactions(transactions, start, end);
             var fileName = $"transactions_{start:yyyyMMdd}_{end:yyyyMMdd}.pdf";
-
             return File(pdfBytes, "application/pdf", fileName);
         }
+
     }
 
 }
