@@ -88,11 +88,21 @@ Ces comptes sont déjà présents dans le sandbox OBP.
 ### Utilisateur OBP
 
 1. Connexion à OBP via `/api/obp/loginOBP`
-2. Choix du compte bancaire (ex: `gh.29.fi`)
+2. Choix du compte bancaire (ex: `gh.29.fi, rbs ...`) **selon l'utilisateur connecté**
 3. Visualisation des transactions OBP
 4. Export PDF des opérations bancaires
 
-## ⚠️ Problèmes connus
+### Connexion Standard + OBP
+1. Inscription / Connexion utilisateur standard
+- Stand : creer un compte utilisateur standard et puis ajouter les transactions et puis actualiser la page pour voir les transactions
+- BDD : Sqlite, les transactions sont stockées dans la base de données SQLite
+- Blazor : l'interface utilisateur est développée en Blazor Server, permettant de visualiser les transactions et les graphiques
+- Les migrations sont gérées par Entity Framework Core à faire une fois pour initialiser la base de données
+2. Connexion à OBP
+- OBP : se connecter à OBP en cochant le checkbox, car c'est un seul formulaire de connexion et voir les transactions 
+- OBP : Un utilisateur peut avoir plusieurs comptes bancaires, donc il faut choisir le compte bancaire pour voir les transactions
+
+## ⚠️ Problèmes connus et pas encore résolus vue le temps imparti
 
 | Problème                          | Détail                                                                                           |
 | --------------------------------- | ------------------------------------------------------------------------------------------------ |
