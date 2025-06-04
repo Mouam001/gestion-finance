@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Business.Implementations;
 using Business.Interfaces;
-using Common.DTO;
 using Common.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -80,11 +79,8 @@ namespace GestionAPI.Controllers
             var transactions = await _service.GetTransactions(start, end);
             if (transactions == null || !transactions.Any())
                 return NotFound("Aucune transaction trouvée dans cette plage de dates.");
-
-            // Extraction du token JWT
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
             
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var user = await _userService.GetCurrentUserAsync(token);
             if (user == null)
                 return Unauthorized("Impossible de récupérer les informations de l'utilisateur.");

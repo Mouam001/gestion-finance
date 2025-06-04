@@ -13,12 +13,7 @@ namespace GestionAPI.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthservice _authService;
-
-        /* public AuthController(IUserService userService)
-         {
-             _userService = userService;
-         }*/
-
+        
         public AuthController(IUserService userService, IAuthservice authService)
         {
             _userService = userService;

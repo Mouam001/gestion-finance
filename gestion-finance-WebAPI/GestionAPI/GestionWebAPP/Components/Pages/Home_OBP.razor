@@ -44,6 +44,9 @@
             <IncomeCard Amount="@revenus" Sources="3" Average="revenus" IsObpUser="true"/>
             <ExpenseCard Amount="@depenses" MainCategory="Divers" IsObpUser="true"/>
             <Chart_OBP IsObpUser="@isUserAuthenticated" Labels="@expenseLabels" Values="@expenseValues"/>
+            <TransactionList Transactions_="@transactions" selectBankId="@selectBankId" selectAccountId="@selectAccountId"/>
+           
+
         </div>
 
         <div class="grid-two">

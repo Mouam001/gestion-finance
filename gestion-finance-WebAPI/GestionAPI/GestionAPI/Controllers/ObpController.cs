@@ -10,10 +10,13 @@ namespace GestionAPI.Controllers
     public class ObpController : ControllerBase
     {
         private readonly IObpService _obpService;
+        private readonly IPdfService _pdfService;
 
-        public ObpController(IObpService obpService)
+        public ObpController(IObpService obpService, IPdfService pdfService)
         {
             _obpService = obpService;
+            _pdfService = pdfService;
+
         }
 
         [HttpPost("loginOPB")]
@@ -113,7 +116,31 @@ namespace GestionAPI.Controllers
                 return StatusCode(500, $"Erreur : {ex.Message}");
             }
         }
-        
+
+        [HttpGet("pdf-releve/{bankId}/{accountId}")]
+        public async Task<IActionResult> ExportObpPdf(string bankId, string accountId)
+        {
+            var token = Request.Headers.Authorization.ToString()?.Replace("Bearer ", "")?.Trim();
+            var transactions = await _obpService.GetTransactionsAsync(token, bankId, accountId);
+            if (transactions == null || transactions.Count == 0)
+            {
+                return NotFound(" Aucun transaction disponible");
+            }
+            
+            if(_pdfService == null)
+            {
+                return StatusCode(500, "Service PDF non disponible");
+            }
+            
+            var bytePdf = _pdfService.GenerateObpPdf(transactions, bankId);
+
+            if (bytePdf == null)
+            {
+                return StatusCode(500, "erreur lors de la cratoion du Relevé bancaire");
+            }
+            
+            return File(bytePdf, "application/pdf", $"Relevé_{bankId}_{DateTime.Now:yyyyMMdd}.pdf");
+        }
         
     }
 }

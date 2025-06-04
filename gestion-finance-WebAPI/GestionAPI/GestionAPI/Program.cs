@@ -7,9 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http;
 using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -107,7 +104,7 @@ builder.Services.AddScoped<IAuthservice, AuthService>(); // Service métier
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IObpService, ObpService>();
-
+builder.Services.AddScoped<IPdfService, ObpPdf>(); // Service pour générer les PDF
 // Ajouter HttpClient et le service OBP
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ObpService>();
@@ -127,6 +124,8 @@ app.UseHttpsRedirection(); // Ajout de redirection vers HTTPS
 app.UseAuthorization();
 app.MapControllers(); // 👈 Permet d'utiliser les contrôleurs
 
+
 app.Run();
+
 
 
